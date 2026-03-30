@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+    <section class="hero">
+        <div class="hero__content">
+            <span class="hero__badge">Онлайн-запись 24/7</span>
+
+            <h1>
+                {% if site_settings and site_settings.hero_title %}
+                    {{ site_settings.hero_title }}
+                {% else %}
+                    Студия бровей и перманентного макияжа
+                {% endif %}
+            </h1>
+
+            <p>
+                {% if site_settings and site_settings.hero_subtitle %}
+                    {{ site_settings.hero_subtitle }}
+                {% else %}
+                    Профессиональный уход, современные техники и комфортная онлайн-запись.
+                    Выберите услугу, мастера и удобное время прямо на сайте.
+                {% endif %}
+            </p>
+
+            <div class="actions">
+                <a href="{% url 'booking:booking_form' %}" class="button">Записаться онлайн</a>
+                <a href="{% url 'catalog:service_list' %}" class="button button-light">Смотреть услуги</a>
+            </div>
+        </div>
+
+        <div class="hero__card">
+            <h3>Почему выбирают нас</h3>
+            <ul class="hero__list">
+                <li>Удобная онлайн-запись без звонков</li>
+                <li>Опытные мастера и современные техники</li>
+                <li>Актуальные цены и прозрачные услуги</li>
+                <li>Комфортная атмосфера и индивидуальный подход</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-header">
+            <h2>Популярные услуги</h2>
+            <a href="{% url 'catalog:service_list' %}" class="button button-light">Все услуги</a>
+        </div>
+
+        <div class="cards-grid cards-grid-3">
+            {% for service in services %}
+                <article class="public-card">
+                    <div class="public-card__meta">
+                        {% if service.category %}
+                            <span class="chip">{{ service.category.name }}</span>
+                        {% endif %}
+                    </div>
+
+                    <h3>{{ service.name }}</h3>
+
+                    <p class="muted">
+                        {{ service.short_description|default:"Описание скоро будет добавлено." }}
+                    </p>
+
+                    <div class="public-card__info">
+                        <span>⏱ {{ service.duration_minutes }} мин.</span>
+                        <strong class="price">{{ service.base_price }}</strong>
+                    </div>
+
+                    <div class="public-card__actions">
+                        <a href="{% url 'catalog:service_detail' service.slug %}" class="button button-light">Подробнее</a>
+                        <a href="{% url 'booking:booking_form' %}?service={{ service.id }}" class="button">Записаться</a>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="content-card">
+                    <p>Услуги пока не добавлены.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-header">
+            <h2>Наши мастера</h2>
+            <a href="{% url 'catalog:master_list' %}" class="button button-light">Все мастера</a>
+        </div>
+
+        <div class="cards-grid cards-grid-3">
+            {% for master in masters %}
+                <article class="public-card">
+                    <h3>{{ master.display_name }}</h3>
+
+                    <p class="muted">
+                        {{ master.short_bio|default:"Информация о мастере скоро появится." }}
+                    </p>
+
+                    {% if master.experience_years %}
+                        <p><strong>Опыт:</strong> {{ master.experience_years }} лет</p>
+                    {% endif %}
+
+                    <div class="public-card__actions">
+                        {% if master.slug %}
+                            <a href="{% url 'catalog:master_detail' master.slug %}" class="button button-light">Профиль мастера</a>
+                        {% endif %}
+                        <a href="{% url 'booking:booking_form' %}?master={{ master.id }}" class="button">Записаться</a>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="content-card">
+                    <p>Мастера пока не добавлены.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <style>
+        .hero {
+            display: grid;
+            grid-template-columns: 1.4fr .9fr;
+            gap: 24px;
+            margin-bottom: 32px;
+            align-items: stretch;
+        }
+
+        .hero__content,
+        .hero__card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .hero__badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #f6edff;
+            color: #7b2cbf;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            line-height: 1.1;
+            margin-bottom: 14px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 18px;
+        }
+
+        .hero__list {
+            padding-left: 18px;
+            margin: 12px 0 0;
+            color: #444;
+        }
+
+        .cards-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .cards-grid-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .public-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .public-card__meta {
+            margin-bottom: 12px;
+        }
+
+        .public-card__info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 16px 0;
+        }
+
+        .public-card__actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #f1f3f5;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .cards-grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+{% endblock %}

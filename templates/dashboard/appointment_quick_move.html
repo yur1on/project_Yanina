@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Быстрый перенос записи{% endblock %}
+
+{% block content %}
+    <div class="section-header">
+        <h1>Быстрый перенос записи</h1>
+        <div class="actions">
+            <a href="{% url 'core:dashboard_calendar' %}?date={{ selected_date_value }}&master={{ appointment.master.id }}" class="button button-light">Назад в календарь</a>
+            <a href="{% url 'core:dashboard_appointment_edit' appointment.id %}" class="button button-outline">Полное редактирование</a>
+        </div>
+    </div>
+
+    <div class="content-card" style="margin-bottom: 24px;">
+        <p><strong>Клиент:</strong> {{ appointment.client }}</p>
+        <p><strong>Мастер:</strong> {{ appointment.master }}</p>
+        <p><strong>Услуга:</strong> {{ appointment.service }}</p>
+        <p><strong>Текущее время:</strong> {{ appointment.start_at|date:"d.m.Y H:i" }}–{{ appointment.end_at|date:"H:i" }}</p>
+    </div>
+
+    <div class="content-card">
+        <form method="post" id="quick-move-form">
+            {% csrf_token %}
+
+            <div class="grid grid-2">
+                <div class="form-row">
+                    <label for="id_booking_date">Новая дата</label>
+                    <input type="date" name="booking_date" id="id_booking_date" value="{{ selected_date_value }}">
+                </div>
+
+                <div class="form-row">
+                    <label for="id_slot">Свободное время</label>
+                    <select name="slot" id="id_slot">
+                        <option value="">Сначала выберите дату</option>
+                    </select>
+                    <div class="muted" id="slot-help" style="margin-top: 8px;">
+                        Свободные слоты подгружаются автоматически.
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit">Перенести запись</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dateInput = document.getElementById("id_booking_date");
+            const slotSelect = document.getElementById("id_slot");
+            const slotHelp = document.getElementById("slot-help");
+
+            const serviceId = "{{ appointment.service.id }}";
+            const masterId = "{{ appointment.master.id }}";
+            const appointmentId = "{{ appointment.id }}";
+            const currentSlotValue = "{{ appointment.start_at|date:'c' }}";
+
+            function resetSlots(placeholder = "Сначала выберите дату") {
+                slotSelect.innerHTML = "";
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = placeholder;
+                slotSelect.appendChild(option);
+            }
+
+            async function loadSlots(selectedSlotValue = "") {
+                const bookingDate = dateInput.value;
+
+                resetSlots();
+
+                if (!bookingDate) {
+                    return;
+                }
+
+                slotHelp.textContent = "Загружаем свободное время...";
+
+                const response = await fetch(
+                    `/dashboard/api/slots/?service=${serviceId}&master=${masterId}&date=${bookingDate}&appointment=${appointmentId}`
+                );
+                const data = await response.json();
+
+                if (!data.slots.length) {
+                    resetSlots("Свободного времени нет");
+                    slotHelp.textContent = "На выбранную дату свободных слотов нет.";
+                    return;
+                }
+
+                resetSlots("Выберите время");
+
+                data.slots.forEach((slot) => {
+                    const option = document.createElement("option");
+                    option.value = slot.value;
+                    option.textContent = slot.label;
+                    if (slot.value === selectedSlotValue) {
+                        option.selected = true;
+                    }
+                    slotSelect.appendChild(option);
+                });
+
+                slotHelp.textContent = "Выберите новый слот для переноса.";
+            }
+
+            dateInput.addEventListener("change", async function () {
+                await loadSlots();
+            });
+
+            loadSlots(currentSlotValue);
+        });
+    </script>
+{% endblock %}

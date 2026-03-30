@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Все записи{% endblock %}
+
+{% block content %}
+    <div class="section-header">
+        <h1>Все записи</h1>
+        <div class="actions">
+            <a href="{% url 'core:dashboard_home' %}" class="button button-light">Назад в dashboard</a>
+            <a href="{% url 'core:dashboard_calendar' %}" class="button">Календарь</a>
+            <a href="{% url 'core:dashboard_appointment_create' %}" class="button button-outline">Новая запись</a>
+        </div>
+    </div>
+
+    <div class="content-card" style="margin-bottom: 24px;">
+        <form method="get">
+            <div class="grid grid-3">
+                <div class="form-row">
+                    <label for="id_q">Поиск</label>
+                    <input type="text" name="q" id="id_q" value="{{ current_q }}" placeholder="Клиент, телефон, мастер, услуга">
+                </div>
+
+                <div class="form-row">
+                    <label for="id_status">Статус</label>
+                    <select name="status" id="id_status">
+                        <option value="">Все статусы</option>
+                        {% for value, label in statuses %}
+                            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label for="id_master">Мастер</label>
+                    <select name="master" id="id_master">
+                        <option value="">Все мастера</option>
+                        {% for master in masters %}
+                            <option value="{{ master.id }}" {% if current_master == master.id|stringformat:"s" %}selected{% endif %}>
+                                {{ master.display_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit">Применить фильтры</button>
+                <a href="{% url 'core:dashboard_appointments' %}" class="button button-outline">Сбросить</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="content-card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Время</th>
+                    <th>Клиент</th>
+                    <th>Телефон</th>
+                    <th>Мастер</th>
+                    <th>Услуга</th>
+                    <th>Статус</th>
+                    <th>Источник</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for appointment in appointments %}
+                    <tr>
+                        <td>{{ appointment.start_at|date:"d.m.Y" }}</td>
+                        <td>{{ appointment.start_at|date:"H:i" }}–{{ appointment.end_at|date:"H:i" }}</td>
+                        <td>
+                            <a href="{% url 'core:dashboard_client_detail' appointment.client.id %}">
+                                {{ appointment.client }}
+                            </a>
+                        </td>
+                        <td>{{ appointment.client.phone }}</td>
+                        <td>{{ appointment.master }}</td>
+                        <td>{{ appointment.service }}</td>
+                        <td>{{ appointment.get_status_display }}</td>
+                        <td>{{ appointment.get_source_display }}</td>
+                        <td>
+                            <div class="actions">
+                                <a href="{% url 'core:dashboard_appointment_edit' appointment.id %}" class="button button-outline">Редактировать</a>
+
+                                {% if appointment.status != "confirmed" %}
+                                    <form method="post" action="{% url 'core:dashboard_appointment_status' appointment.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="confirm">
+                                        <input type="hidden" name="redirect_to" value="{% url 'core:dashboard_appointments' %}?status={{ current_status }}&master={{ current_master }}&q={{ current_q }}">
+                                        <button type="submit">Подтвердить</button>
+                                    </form>
+                                {% endif %}
+
+                                {% if appointment.status != "completed" %}
+                                    <form method="post" action="{% url 'core:dashboard_appointment_status' appointment.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="complete">
+                                        <input type="hidden" name="redirect_to" value="{% url 'core:dashboard_appointments' %}?status={{ current_status }}&master={{ current_master }}&q={{ current_q }}">
+                                        <button type="submit" class="button-light">Завершить</button>
+                                    </form>
+                                {% endif %}
+
+                                {% if appointment.status != "cancelled" %}
+                                    <form method="post" action="{% url 'core:dashboard_appointment_status' appointment.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="cancel">
+                                        <input type="hidden" name="redirect_to" value="{% url 'core:dashboard_appointments' %}?status={{ current_status }}&master={{ current_master }}&q={{ current_q }}">
+                                        <button type="submit" class="button-outline">Отменить</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9">Записи не найдены.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+            <div class="actions" style="margin-top: 20px;">
+                {% if page_obj.has_previous %}
+                    <a class="button button-outline" href="?page={{ page_obj.previous_page_number }}&status={{ current_status }}&master={{ current_master }}&q={{ current_q }}">Назад</a>
+                {% endif %}
+
+                <span style="padding: 14px 0;">Страница {{ page_obj.number }} из {{ paginator.num_pages }}</span>
+
+                {% if page_obj.has_next %}
+                    <a class="button button-outline" href="?page={{ page_obj.next_page_number }}&status={{ current_status }}&master={{ current_master }}&q={{ current_q }}">Вперёд</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

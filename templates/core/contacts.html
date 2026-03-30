@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Контакты{% endblock %}
+
+{% block content %}
+    <section class="section">
+        <div class="content-card">
+            <h1>Контакты</h1>
+
+            <div class="contacts-list">
+                <p>
+                    <strong>Телефон:</strong>
+                    {% if site_settings and site_settings.phone %}
+                        {{ site_settings.phone }}
+                    {% else %}
+                        +00 000 000 00 00
+                    {% endif %}
+                </p>
+
+                <p>
+                    <strong>Email:</strong>
+                    {% if site_settings and site_settings.email %}
+                        {{ site_settings.email }}
+                    {% else %}
+                        studio@example.com
+                    {% endif %}
+                </p>
+
+                <p>
+                    <strong>Адрес:</strong>
+                    {% if site_settings and site_settings.address %}
+                        {{ site_settings.address }}
+                    {% else %}
+                        адрес студии можно указать позже
+                    {% endif %}
+                </p>
+
+                {% if site_settings and site_settings.instagram %}
+                    <p>
+                        <strong>Instagram:</strong>
+                        <a href="{{ site_settings.instagram }}" target="_blank">{{ site_settings.instagram }}</a>
+                    </p>
+                {% endif %}
+
+                {% if site_settings and site_settings.telegram %}
+                    <p>
+                        <strong>Telegram:</strong>
+                        <a href="{{ site_settings.telegram }}" target="_blank">{{ site_settings.telegram }}</a>
+                    </p>
+                {% endif %}
+
+                {% if site_settings and site_settings.whatsapp %}
+                    <p>
+                        <strong>WhatsApp:</strong>
+                        <a href="{{ site_settings.whatsapp }}" target="_blank">{{ site_settings.whatsapp }}</a>
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="actions" style="margin-top: 20px;">
+                <a href="{% url 'booking:booking_form' %}" class="button">Записаться онлайн</a>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .contacts-list {
+            display: grid;
+            gap: 12px;
+            color: #444;
+            margin-top: 16px;
+        }
+    </style>
+{% endblock %}

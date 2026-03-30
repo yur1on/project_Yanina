@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Услуги{% endblock %}
+
+{% block content %}
+    <section class="section">
+        <div class="section-header">
+            <h1>Услуги</h1>
+            <a href="{% url 'booking:booking_form' %}" class="button">Записаться онлайн</a>
+        </div>
+
+        <div class="cards-grid cards-grid-3">
+            {% for service in services %}
+                <article class="public-card">
+                    <h3>{{ service.name }}</h3>
+
+                    <p class="muted">
+                        {{ service.short_description|default:"Описание будет добавлено позже." }}
+                    </p>
+
+                    {% if service.category %}
+                        <p><strong>Категория:</strong> {{ service.category.name }}</p>
+                    {% endif %}
+
+                    <p><strong>Длительность:</strong> {{ service.duration_minutes }} мин.</p>
+                    <p class="price">{{ service.base_price }}</p>
+
+                    <div class="public-card__actions">
+                        <a href="{% url 'catalog:service_detail' service.slug %}" class="button">Подробнее</a>
+                        <a href="{% url 'booking:booking_form' %}?service={{ service.id }}" class="button button-light">Записаться</a>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="content-card">
+                    <p>Услуги пока не добавлены.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <style>
+        .cards-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .cards-grid-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .public-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .public-card__actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 980px) {
+            .cards-grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}

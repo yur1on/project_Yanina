@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать блокировку{% endblock %}
+
+{% block content %}
+    <div class="section-header">
+        <h1>Редактировать блокировку времени</h1>
+        <div class="actions">
+            <a href="{% url 'core:dashboard_calendar' %}?date={{ timeoff.start_at|date:'Y-m-d' }}&master={{ timeoff.master.id }}" class="button button-light">Назад в календарь</a>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-row">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="grid grid-2">
+                <div class="form-row">
+                    <label for="{{ form.master.id_for_label }}">{{ form.master.label }}</label>
+                    {{ form.master }}
+                    {{ form.master.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.block_date.id_for_label }}">{{ form.block_date.label }}</label>
+                    {{ form.block_date }}
+                    {{ form.block_date.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.start_time.id_for_label }}">{{ form.start_time.label }}</label>
+                    {{ form.start_time }}
+                    {{ form.start_time.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.end_time.id_for_label }}">{{ form.end_time.label }}</label>
+                    {{ form.end_time }}
+                    {{ form.end_time.errors }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+                {{ form.reason }}
+                {{ form.reason.errors }}
+            </div>
+
+            <div class="actions">
+                <button type="submit">Сохранить изменения</button>
+                <a href="{% url 'core:dashboard_calendar' %}?date={{ timeoff.start_at|date:'Y-m-d' }}&master={{ timeoff.master.id }}" class="button button-outline">Отмена</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

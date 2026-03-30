@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать запись{% endblock %}
+
+{% block content %}
+    <div class="section-header">
+        <h1>Редактировать запись</h1>
+        <div class="actions">
+            <a href="{% url 'core:dashboard_appointments' %}" class="button button-light">Назад к записям</a>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <form method="post" id="appointment-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-row">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <input type="hidden" name="client" id="client-id" value="{% if form.client.value %}{{ form.client.value }}{% endif %}">
+
+            <div class="form-row client-search-wrap">
+                <div class="label-row">
+                    <label for="client-search">Клиент</label>
+                    <a href="{% url 'core:dashboard_client_create' %}" id="create-client-link" class="button button-outline button-small">
+                        + Новый клиент
+                    </a>
+                </div>
+
+                <input
+                    type="text"
+                    id="client-search"
+                    autocomplete="off"
+                    placeholder="Введите имя, телефон или email"
+                    value="{{ appointment.client }}"
+                    required
+                >
+                <div id="client-results" class="autocomplete-results"></div>
+                <div id="client-selected" class="selected-client-box" style="display:block;">
+                    {{ appointment.client }}{% if appointment.client.phone %} · {{ appointment.client.phone }}{% endif %}
+                </div>
+                {% if form.client.errors %}
+                    <div class="errorlist">{{ form.client.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-2">
+                <div class="form-row">
+                    <label for="{{ form.master.id_for_label }}">{{ form.master.label }}</label>
+                    {{ form.master }}
+                    {{ form.master.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.service.id_for_label }}">{{ form.service.label }}</label>
+                    {{ form.service }}
+                    {{ form.service.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.booking_date.id_for_label }}">{{ form.booking_date.label }}</label>
+                    {{ form.booking_date }}
+                    {{ form.booking_date.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.slot.id_for_label }}">{{ form.slot.label }}</label>
+                    {{ form.slot }}
+                    {{ form.slot.errors }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+                {{ form.comment }}
+                {{ form.comment.errors }}
+            </div>
+
+            <div class="actions">
+                <button type="submit">Сохранить изменения</button>
+                <a href="{% url 'core:dashboard_appointments' %}" class="button button-outline">Отмена</a>
+            </div>
+        </form>
+    </div>
+
+    <style>
+        .client-search-wrap {
+            position: relative;
+        }
+
+        .label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .button-small {
+            padding: 8px 12px;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .autocomplete-results {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 4px);
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+            max-height: 240px;
+            overflow-y: auto;
+            display: none;
+            z-index: 20;
+        }
+
+        .autocomplete-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f2f2f2;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: 0;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8f9fa;
+        }
+
+        .autocomplete-name {
+            font-weight: 600;
+        }
+
+        .autocomplete-meta {
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .selected-client-box {
+            margin-top: 8px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #eef9ef;
+            color: #2f7d32;
+            font-weight: 600;
+        }
+    </style>
+
+    <script>
+        (function () {
+            const masterField = document.getElementById("id_master");
+            const serviceField = document.getElementById("id_service");
+            const dateField = document.getElementById("id_booking_date");
+            const slotField = document.getElementById("id_slot");
+            const createClientLink = document.getElementById("create-client-link");
+
+            const clientSearchInput = document.getElementById("client-search");
+            const clientResultsBox = document.getElementById("client-results");
+            const clientHiddenInput = document.getElementById("client-id");
+            const clientSelectedBox = document.getElementById("client-selected");
+
+            let clientSearchTimeout = null;
+            let isSyncing = false;
+            const appointmentId = "{{ appointment.id }}";
+
+            function updateCreateClientLink() {
+                const params = new URLSearchParams();
+                params.set("next", window.location.pathname);
+
+                if (serviceField.value) {
+                    params.set("service", serviceField.value);
+                }
+                if (masterField.value) {
+                    params.set("master", masterField.value);
+                }
+                if (dateField.value) {
+                    params.set("date", dateField.value);
+                }
+
+                createClientLink.href = `{% url 'core:dashboard_client_create' %}?${params.toString()}`;
+            }
+
+            function hideClientResults() {
+                clientResultsBox.innerHTML = "";
+                clientResultsBox.style.display = "none";
+            }
+
+            function showSelectedClient(name, phone) {
+                clientSelectedBox.style.display = "block";
+                clientSelectedBox.textContent = phone ? `${name} · ${phone}` : name;
+            }
+
+            clientSearchInput.addEventListener("input", function () {
+                const query = this.value.trim();
+                clearTimeout(clientSearchTimeout);
+
+                if (query.length < 2) {
+                    hideClientResults();
+                    return;
+                }
+
+                clientSearchTimeout = setTimeout(() => {
+                    fetch(`/dashboard/api/clients/?q=${encodeURIComponent(query)}`)
+                        .then((response) => response.json())
+                        .then((data) => {
+                            clientResultsBox.innerHTML = "";
+
+                            if (!data.clients || !data.clients.length) {
+                                clientResultsBox.innerHTML = `<div class="autocomplete-item">Ничего не найдено</div>`;
+                                clientResultsBox.style.display = "block";
+                                return;
+                            }
+
+                            data.clients.forEach((client) => {
+                                const item = document.createElement("div");
+                                item.className = "autocomplete-item";
+                                item.innerHTML = `
+                                    <div class="autocomplete-name">${client.name}</div>
+                                    <div class="autocomplete-meta">${client.phone || ""}</div>
+                                `;
+                                item.addEventListener("click", () => {
+                                    clientHiddenInput.value = client.id;
+                                    clientSearchInput.value = client.name;
+                                    showSelectedClient(client.name, client.phone);
+                                    hideClientResults();
+                                });
+                                clientResultsBox.appendChild(item);
+                            });
+
+                            clientResultsBox.style.display = "block";
+                        });
+                }, 250);
+            });
+
+            document.addEventListener("click", function (event) {
+                if (!event.target.closest(".client-search-wrap")) {
+                    hideClientResults();
+                }
+            });
+
+            function resetSlots(message) {
+                slotField.innerHTML = `<option value="">${message}</option>`;
+            }
+
+            function loadMasters(selectedMasterId = "") {
+                const serviceId = serviceField.value;
+                const currentMaster = selectedMasterId || masterField.value;
+
+                fetch(`/dashboard/api/masters/?service=${serviceId}&selected_master=${currentMaster}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        masterField.innerHTML = '<option value="">Выберите мастера</option>';
+
+                        data.masters.forEach((master) => {
+                            const option = document.createElement("option");
+                            option.value = master.id;
+                            option.textContent = master.name;
+                            if (master.selected) {
+                                option.selected = true;
+                            }
+                            masterField.appendChild(option);
+                        });
+                    });
+            }
+
+            function loadServices(selectedServiceId = "") {
+                const masterId = masterField.value;
+                const currentService = selectedServiceId || serviceField.value;
+
+                fetch(`/dashboard/api/services/?master=${masterId}&selected_service=${currentService}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        serviceField.innerHTML = '<option value="">Выберите услугу</option>';
+
+                        data.services.forEach((service) => {
+                            const option = document.createElement("option");
+                            option.value = service.id;
+                            option.textContent = service.name;
+                            if (service.selected) {
+                                option.selected = true;
+                            }
+                            serviceField.appendChild(option);
+                        });
+                    });
+            }
+
+            function loadSlots(selectedSlotValue = "") {
+                const serviceId = serviceField.value;
+                const masterId = masterField.value;
+                const bookingDate = dateField.value;
+
+                if (!serviceId || !masterId || !bookingDate) {
+                    resetSlots("Сначала выберите мастера, услугу и дату");
+                    return;
+                }
+
+                slotField.innerHTML = '<option value="">Загрузка...</option>';
+
+                fetch(`/dashboard/api/slots/?service=${serviceId}&master=${masterId}&date=${bookingDate}&appointment=${appointmentId}`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        slotField.innerHTML = '<option value="">Выберите время</option>';
+
+                        data.slots.forEach((slot) => {
+                            const option = document.createElement("option");
+                            option.value = slot.value;
+                            option.textContent = slot.label;
+                            if (selectedSlotValue && selectedSlotValue === slot.value) {
+                                option.selected = true;
+                            }
+                            slotField.appendChild(option);
+                        });
+                    });
+            }
+
+            masterField.addEventListener("change", function () {
+                if (isSyncing) return;
+                isSyncing = true;
+                loadServices();
+                resetSlots("Сначала выберите услугу и дату");
+                updateCreateClientLink();
+                setTimeout(() => {
+                    isSyncing = false;
+                }, 200);
+            });
+
+            serviceField.addEventListener("change", function () {
+                if (isSyncing) return;
+                isSyncing = true;
+                loadMasters();
+                resetSlots("Сначала выберите мастера и дату");
+                updateCreateClientLink();
+                setTimeout(() => {
+                    isSyncing = false;
+                    if (masterField.value && serviceField.value && dateField.value) {
+                        loadSlots();
+                    }
+                }, 250);
+            });
+
+            dateField.addEventListener("change", function () {
+                loadSlots();
+                updateCreateClientLink();
+            });
+
+            window.addEventListener("load", function () {
+                const initialMaster = "{{ form.master.value|default:''|escapejs }}";
+                const initialService = "{{ form.service.value|default:''|escapejs }}";
+                const initialSlot = "{{ form.slot.value|default:''|escapejs }}";
+
+                if (initialMaster) {
+                    loadServices(initialService);
+                }
+                if (initialService) {
+                    loadMasters(initialMaster);
+                }
+
+                setTimeout(() => {
+                    if (masterField.value && serviceField.value && dateField.value) {
+                        loadSlots(initialSlot);
+                    } else {
+                        resetSlots("Сначала выберите мастера, услугу и дату");
+                    }
+                }, 350);
+
+                updateCreateClientLink();
+            });
+        })();
+    </script>
+{% endblock %}

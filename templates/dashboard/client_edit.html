@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать клиента{% endblock %}
+
+{% block content %}
+    <div class="section-header">
+        <h1>Редактировать клиента</h1>
+        <div class="actions">
+            <a href="{% url 'core:dashboard_client_detail' client.id %}" class="button button-light">Назад в карточку</a>
+            <a href="{% url 'core:dashboard_appointments' %}" class="button button-outline">Все записи</a>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-row">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="grid grid-2">
+                <div class="form-row">
+                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {{ form.first_name.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {{ form.last_name.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                    {{ form.phone.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {{ form.email.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.birth_date.id_for_label }}">{{ form.birth_date.label }}</label>
+                    {{ form.birth_date }}
+                    {{ form.birth_date.errors }}
+                </div>
+
+                <div class="form-row">
+                    <label for="{{ form.source.id_for_label }}">{{ form.source.label }}</label>
+                    {{ form.source }}
+                    {{ form.source.errors }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
+                {{ form.tags }}
+                {{ form.tags.errors }}
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                {{ form.notes }}
+                {{ form.notes.errors }}
+            </div>
+
+            <div class="actions">
+                <button type="submit">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

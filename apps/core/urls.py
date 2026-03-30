@@ -1,0 +1,55 @@
+from django.urls import path
+
+from .views import (
+    ContactsPageView,
+    DashboardAppointmentCreateView,
+    DashboardAppointmentDeleteView,
+    DashboardAppointmentEditView,
+    DashboardAppointmentListView,
+    DashboardAppointmentQuickMoveView,
+    DashboardAppointmentStatusUpdateView,
+    DashboardAvailableClientsView,
+    DashboardAvailableMastersView,
+    DashboardAvailableServicesView,
+    DashboardAvailableSlotsView,
+    DashboardCalendarView,
+    DashboardClientCreateView,
+    DashboardClientDetailView,
+    DashboardClientEditView,
+    DashboardClientNoteCreateView,
+    DashboardHomeView,
+    DashboardTimeOffCreateView,
+    DashboardTimeOffDeleteView,
+    DashboardTimeOffEditView,
+    HomePageView,
+)
+
+app_name = "core"
+
+urlpatterns = [
+    path("", HomePageView.as_view(), name="home"),
+    path("contacts/", ContactsPageView.as_view(), name="contacts"),
+    path("dashboard/", DashboardHomeView.as_view(), name="dashboard_home"),
+    path("dashboard/appointments/", DashboardAppointmentListView.as_view(), name="dashboard_appointments"),
+    path("dashboard/calendar/", DashboardCalendarView.as_view(), name="dashboard_calendar"),
+    path("dashboard/appointments/create/", DashboardAppointmentCreateView.as_view(), name="dashboard_appointment_create"),
+    path("dashboard/appointments/<int:pk>/edit/", DashboardAppointmentEditView.as_view(), name="dashboard_appointment_edit"),
+    path("dashboard/appointments/<int:pk>/quick-move/", DashboardAppointmentQuickMoveView.as_view(), name="dashboard_appointment_quick_move"),
+    path("dashboard/appointments/<int:pk>/delete/", DashboardAppointmentDeleteView.as_view(), name="dashboard_appointment_delete"),
+    path("dashboard/timeoff/create/", DashboardTimeOffCreateView.as_view(), name="dashboard_timeoff_create"),
+    path("dashboard/timeoff/<int:pk>/edit/", DashboardTimeOffEditView.as_view(), name="dashboard_timeoff_edit"),
+    path("dashboard/timeoff/<int:pk>/delete/", DashboardTimeOffDeleteView.as_view(), name="dashboard_timeoff_delete"),
+    path("dashboard/clients/create/", DashboardClientCreateView.as_view(), name="dashboard_client_create"),
+    path("dashboard/clients/<int:pk>/", DashboardClientDetailView.as_view(), name="dashboard_client_detail"),
+    path("dashboard/clients/<int:pk>/edit/", DashboardClientEditView.as_view(), name="dashboard_client_edit"),
+    path("dashboard/clients/<int:pk>/notes/create/", DashboardClientNoteCreateView.as_view(), name="dashboard_client_note_create"),
+    path(
+        "dashboard/appointments/<int:pk>/status/",
+        DashboardAppointmentStatusUpdateView.as_view(),
+        name="dashboard_appointment_status",
+    ),
+    path("dashboard/api/masters/", DashboardAvailableMastersView.as_view(), name="dashboard_available_masters"),
+    path("dashboard/api/services/", DashboardAvailableServicesView.as_view(), name="dashboard_available_services"),
+    path("dashboard/api/slots/", DashboardAvailableSlotsView.as_view(), name="dashboard_available_slots"),
+    path("dashboard/api/clients/", DashboardAvailableClientsView.as_view(), name="dashboard_available_clients"),
+]

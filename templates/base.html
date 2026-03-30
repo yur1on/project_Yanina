@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% block title %}
+            {% if site_settings and site_settings.site_name %}
+                {{ site_settings.site_name }}
+            {% else %}
+                Студия красоты
+            {% endif %}
+        {% endblock %}
+    </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f3f5;
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid #ececec;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo a {
+            text-decoration: none;
+            color: #111;
+            font-weight: 700;
+            font-size: 22px;
+        }
+
+        nav {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: #000;
+        }
+
+        .page-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+
+        .content-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #fff 0%, #f6e9ef 100%);
+            border-radius: 24px;
+            padding: 56px 36px;
+            margin-bottom: 28px;
+        }
+
+        .hero h1 {
+            margin-top: 0;
+            font-size: 42px;
+            line-height: 1.15;
+        }
+
+        .hero p {
+            font-size: 18px;
+            max-width: 700px;
+            color: #444;
+        }
+
+        .button, button {
+            display: inline-block;
+            background: #1f1f1f;
+            color: #fff;
+            text-decoration: none;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 20px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .button-light {
+            background: #8d6f7d;
+        }
+
+        .button-outline {
+            background: transparent;
+            color: #1f1f1f;
+            border: 1px solid #1f1f1f;
+        }
+
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.05);
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+
+        .section {
+            margin-top: 36px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: #eef6ee;
+            color: #1f5d1f;
+        }
+
+        .errorlist {
+            color: #b30000;
+            margin: 8px 0;
+        }
+
+        .form-row {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d5d5d5;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 15px;
+            background: #fff;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .muted {
+            color: #666;
+        }
+
+        .price {
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .stats-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+
+        table th,
+        table td {
+            text-align: left;
+            padding: 14px 12px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+
+        table th {
+            background: #faf7f8;
+        }
+
+        footer {
+            padding: 30px 20px 60px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="nav-container">
+        <div class="logo">
+            <a href="{% url 'core:home' %}">
+                {% if site_settings and site_settings.site_name %}
+                    {{ site_settings.site_name }}
+                {% else %}
+                    Beauty Studio
+                {% endif %}
+            </a>
+        </div>
+        <nav>
+            <a href="{% url 'core:home' %}">Главная</a>
+            <a href="{% url 'catalog:service_list' %}">Услуги</a>
+            <a href="{% url 'catalog:master_list' %}">Мастера</a>
+            <a href="{% url 'booking:booking_form' %}">Онлайн-запись</a>
+            <a href="{% url 'core:contacts' %}">Контакты</a>
+{% if request.user.is_authenticated %}
+    <a href="{% url 'core:dashboard_home' %}">Dashboard</a>
+    <a href="{% url 'core:dashboard_calendar' %}">Календарь</a>
+    <a href="{% url 'admin:index' %}">Админка</a>
+{% endif %}
+        </nav>
+    </div>
+</header>
+
+<div class="page-container">
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</div>
+
+<footer>
+    {% if site_settings and site_settings.footer_text %}
+        {{ site_settings.footer_text }}
+    {% else %}
+        © Студия красоты. Локальная версия проекта на Django.
+    {% endif %}
+</footer>
+</body>
+</html>

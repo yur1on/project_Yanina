@@ -1,0 +1,771 @@
+{% extends "base.html" %}
+
+{% block title %}Онлайн-запись{% endblock %}
+
+{% block content %}
+    <section class="booking-page">
+        <div class="booking-page__intro">
+            <span class="booking-page__badge">Онлайн-запись</span>
+            <h1>Запишитесь в пару шагов</h1>
+            <p>
+                Выберите услугу, мастера, дату и свободное время.
+                После этого оставьте свои контакты — и заявка сразу попадёт в систему.
+            </p>
+        </div>
+
+        <div class="booking-layout">
+            <div class="booking-main">
+                <div class="content-card booking-card">
+                    <form method="post" id="booking-form">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="form-errors-box">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="booking-section">
+                            <div class="booking-section__title">
+                                <span class="booking-step">1</span>
+                                <div>
+                                    <h2>Выбор записи</h2>
+                                    <p>Сначала выберите услугу, мастера и дату.</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-2">
+                                <div class="form-row">
+                                    <label for="{{ form.service.id_for_label }}">{{ form.service.label }}</label>
+                                    {{ form.service }}
+                                    {{ form.service.errors }}
+                                </div>
+
+                                <div class="form-row">
+                                    <label for="{{ form.master.id_for_label }}">{{ form.master.label }}</label>
+                                    {{ form.master }}
+                                    {{ form.master.errors }}
+                                </div>
+
+                                <div class="form-row form-row--date">
+                                    <label for="{{ form.booking_date.id_for_label }}">{{ form.booking_date.label }}</label>
+                                    {{ form.booking_date }}
+                                    {{ form.booking_date.errors }}
+                                    <div class="date-help">Нажмите на поле, чтобы выбрать удобный день.</div>
+                                </div>
+
+                                <div class="form-row">
+                                    <label for="{{ form.slot.id_for_label }}">{{ form.slot.label }}</label>
+
+                                    <div class="slot-select-hidden">
+                                        {{ form.slot }}
+                                    </div>
+                                    {{ form.slot.errors }}
+
+                                    <div class="slot-help" id="slot-help">
+                                        Выберите услугу, мастера и дату — свободное время подгрузится автоматически.
+                                    </div>
+
+                                    <div id="slot-sections" class="slot-sections">
+                                        <div class="slot-grid__empty">
+                                            Здесь появятся доступные слоты времени.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="booking-summary" id="booking-summary">
+                                <div class="booking-summary__empty">
+                                    Когда вы выберете параметры записи, здесь появится краткая сводка.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="booking-divider"></div>
+
+                        <div class="booking-section">
+                            <div class="booking-section__title">
+                                <span class="booking-step">2</span>
+                                <div>
+                                    <h2>Ваши контакты</h2>
+                                    <p>Эти данные нужны для подтверждения и связи с вами.</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-2">
+                                <div class="form-row">
+                                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                                    {{ form.first_name }}
+                                    {{ form.first_name.errors }}
+                                </div>
+
+                                <div class="form-row">
+                                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                                    {{ form.last_name }}
+                                    {{ form.last_name.errors }}
+                                </div>
+
+                                <div class="form-row">
+                                    <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                                    {{ form.phone }}
+                                    {{ form.phone.errors }}
+                                </div>
+
+                                <div class="form-row">
+                                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                                    {{ form.email }}
+                                    {{ form.email.errors }}
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+                                {{ form.comment }}
+                                {{ form.comment.errors }}
+                            </div>
+                        </div>
+
+                        <div class="booking-submit">
+                            <button type="submit" class="button booking-submit__button">Отправить заявку</button>
+                            <p class="booking-submit__note">
+                                После отправки заявка появится у администратора, и с вами свяжутся при необходимости.
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <aside class="booking-sidebar">
+                <div class="content-card booking-side-card">
+                    <h3>Как проходит запись</h3>
+                    <ol class="booking-side-list">
+                        <li>Выбираете услугу</li>
+                        <li>Подбираете мастера</li>
+                        <li>Смотрите свободные слоты</li>
+                        <li>Оставляете контакты</li>
+                        <li>Отправляете заявку</li>
+                    </ol>
+                </div>
+
+                <div class="content-card booking-side-card booking-side-card--accent">
+                    <h3>Важно</h3>
+                    <p>
+                        Если на выбранную дату нет свободного времени, попробуйте выбрать другого мастера
+                        или соседний день.
+                    </p>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <style>
+        .booking-page {
+            display: grid;
+            gap: 24px;
+        }
+
+        .booking-page__intro {
+            background: linear-gradient(135deg, #fff 0%, #faf5ff 100%);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .booking-page__badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #f3e8ff;
+            color: #7c3aed;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .booking-page__intro h1 {
+            margin: 0 0 10px;
+            font-size: 38px;
+            line-height: 1.1;
+        }
+
+        .booking-page__intro p {
+            margin: 0;
+            color: #555;
+            font-size: 17px;
+            max-width: 760px;
+        }
+
+        .booking-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .booking-card {
+            padding: 28px;
+        }
+
+        .booking-section {
+            display: grid;
+            gap: 18px;
+        }
+
+        .booking-section__title {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .booking-section__title h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
+        }
+
+        .booking-section__title p {
+            margin: 0;
+            color: #666;
+        }
+
+        .booking-step {
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            background: #7c3aed;
+            color: #fff;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .booking-divider {
+            height: 1px;
+            background: #eee;
+            margin: 28px 0;
+        }
+
+        .slot-select-hidden {
+            display: none;
+        }
+
+        .slot-help,
+        .date-help {
+            margin-top: 8px;
+            color: #666;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .slot-sections {
+            display: grid;
+            gap: 18px;
+            margin-top: 14px;
+        }
+
+        .slot-section {
+            border: 1px solid #e9ddff;
+            border-radius: 18px;
+            padding: 14px;
+            background: #fcfaff;
+        }
+
+        .slot-section__title {
+            margin: 0 0 12px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #4b5563;
+        }
+
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+            gap: 10px;
+        }
+
+        .slot-grid__empty {
+            padding: 14px 16px;
+            border: 1px dashed #d8c8ff;
+            border-radius: 14px;
+            color: #777;
+            background: #faf7ff;
+            font-size: 14px;
+        }
+
+        .slot-button {
+            appearance: none;
+            border: 1px solid #d7c0ff;
+            background: #f5efff;
+            color: #4a2f7a;
+            border-radius: 14px;
+            padding: 12px 10px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: .15s ease;
+            box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+        }
+
+        .slot-button:hover {
+            border-color: #7c3aed;
+            background: #eee3ff;
+            color: #3f2470;
+            transform: translateY(-1px);
+        }
+
+        .slot-button.is-selected {
+            background: #7c3aed;
+            color: #fff;
+            border-color: #7c3aed;
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.22);
+        }
+
+        .booking-summary {
+            border: 1px solid #ececec;
+            background: #fafafa;
+            border-radius: 18px;
+            padding: 16px 18px;
+        }
+
+        .booking-summary__empty {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .booking-summary__grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .booking-summary__row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 15px;
+        }
+
+        .booking-summary__label {
+            color: #666;
+        }
+
+        .booking-summary__value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .booking-submit {
+            margin-top: 28px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .booking-submit__button {
+            width: auto;
+            min-width: 220px;
+        }
+
+        .booking-submit__note {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .booking-side-card {
+            padding: 22px;
+        }
+
+        .booking-side-card h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .booking-side-list {
+            margin: 0;
+            padding-left: 18px;
+            color: #444;
+            display: grid;
+            gap: 8px;
+        }
+
+        .booking-side-card--accent {
+            background: #faf5ff;
+            border: 1px solid #efe3ff;
+        }
+
+        .form-errors-box {
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            color: #9f1239;
+            padding: 14px 16px;
+            border-radius: 14px;
+            margin-bottom: 18px;
+        }
+
+        #id_service,
+        #id_master,
+        #id_first_name,
+        #id_last_name,
+        #id_phone,
+        #id_email,
+        #id_comment {
+            width: 100%;
+        }
+
+        #id_booking_date {
+            width: 100%;
+            min-height: 52px;
+            padding: 12px 14px;
+            border: 1px solid #d7c0ff;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
+            color: #3f2470;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.06);
+        }
+
+        #id_booking_date:hover {
+            border-color: #b794f4;
+            background: linear-gradient(135deg, #ffffff 0%, #f7f0ff 100%);
+        }
+
+        #id_booking_date:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+        }
+
+        .form-row--date {
+            position: relative;
+        }
+
+        @media (max-width: 980px) {
+            .booking-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .booking-page__intro h1 {
+                font-size: 30px;
+            }
+
+            .slot-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const serviceSelect = document.getElementById("id_service");
+            const masterSelect = document.getElementById("id_master");
+            const dateInput = document.getElementById("id_booking_date");
+            const slotSelect = document.getElementById("id_slot");
+            const slotHelp = document.getElementById("slot-help");
+            const summaryBox = document.getElementById("booking-summary");
+            const slotSections = document.getElementById("slot-sections");
+
+            const initialMasterValue = masterSelect.value;
+            const initialSlotValue = slotSelect.value;
+
+            function getSelectedText(selectElement) {
+                if (!selectElement || !selectElement.selectedOptions.length) {
+                    return "";
+                }
+                return selectElement.selectedOptions[0].textContent.trim();
+            }
+
+            function renderSummary() {
+                const serviceText = getSelectedText(serviceSelect);
+                const masterText = getSelectedText(masterSelect);
+                const dateValue = dateInput.value;
+                const slotText = getSelectedText(slotSelect);
+
+                const hasRealService = serviceSelect.value;
+                const hasRealMaster = masterSelect.value;
+                const hasRealDate = dateValue;
+                const hasRealSlot = slotSelect.value;
+
+                if (!hasRealService && !hasRealMaster && !hasRealDate && !hasRealSlot) {
+                    summaryBox.innerHTML = `
+                        <div class="booking-summary__empty">
+                            Когда вы выберете параметры записи, здесь появится краткая сводка.
+                        </div>
+                    `;
+                    return;
+                }
+
+                summaryBox.innerHTML = `
+                    <div class="booking-summary__grid">
+                        <div class="booking-summary__row">
+                            <span class="booking-summary__label">Услуга</span>
+                            <span class="booking-summary__value">${hasRealService ? serviceText : "—"}</span>
+                        </div>
+                        <div class="booking-summary__row">
+                            <span class="booking-summary__label">Мастер</span>
+                            <span class="booking-summary__value">${hasRealMaster ? masterText : "—"}</span>
+                        </div>
+                        <div class="booking-summary__row">
+                            <span class="booking-summary__label">Дата</span>
+                            <span class="booking-summary__value">${hasRealDate ? dateValue : "—"}</span>
+                        </div>
+                        <div class="booking-summary__row">
+                            <span class="booking-summary__label">Время</span>
+                            <span class="booking-summary__value">${hasRealSlot ? slotText : "—"}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderEmptySlotSections(message) {
+                slotSections.innerHTML = `<div class="slot-grid__empty">${message}</div>`;
+            }
+
+            function resetMasters(placeholder = "Сначала выберите услугу") {
+                masterSelect.innerHTML = "";
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = placeholder;
+                masterSelect.appendChild(option);
+                renderSummary();
+            }
+
+            function resetSlots(placeholder = "Сначала выберите услугу, мастера и дату") {
+                slotSelect.innerHTML = "";
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = placeholder;
+                slotSelect.appendChild(option);
+                renderEmptySlotSections("Здесь появятся доступные слоты времени.");
+                renderSummary();
+            }
+
+            function setSlotValue(value, label) {
+                const options = Array.from(slotSelect.options);
+                const matched = options.find(option => option.value === value);
+
+                if (matched) {
+                    slotSelect.value = value;
+                } else {
+                    const option = document.createElement("option");
+                    option.value = value;
+                    option.textContent = label;
+                    slotSelect.appendChild(option);
+                    slotSelect.value = value;
+                }
+
+                document.querySelectorAll(".slot-button").forEach((button) => {
+                    button.classList.toggle("is-selected", button.dataset.value === value);
+                });
+
+                renderSummary();
+            }
+
+            function getSlotPeriod(label) {
+                const hour = parseInt(label.split(":")[0], 10);
+
+                if (hour < 12) {
+                    return "morning";
+                }
+                if (hour < 17) {
+                    return "day";
+                }
+                return "evening";
+            }
+
+            function getSlotPeriodTitle(period) {
+                if (period === "morning") return "Утро";
+                if (period === "day") return "День";
+                return "Вечер";
+            }
+
+            function renderSlotSections(slots, selectedSlotValue = "") {
+                if (!slots.length) {
+                    renderEmptySlotSections("На выбранную дату нет свободного времени.");
+                    return;
+                }
+
+                const grouped = {
+                    morning: [],
+                    day: [],
+                    evening: [],
+                };
+
+                slots.forEach((slot) => {
+                    const period = getSlotPeriod(slot.label);
+                    grouped[period].push(slot);
+                });
+
+                slotSections.innerHTML = "";
+
+                ["morning", "day", "evening"].forEach((period) => {
+                    if (!grouped[period].length) {
+                        return;
+                    }
+
+                    const section = document.createElement("div");
+                    section.className = "slot-section";
+
+                    const title = document.createElement("h3");
+                    title.className = "slot-section__title";
+                    title.textContent = getSlotPeriodTitle(period);
+
+                    const grid = document.createElement("div");
+                    grid.className = "slot-grid";
+
+                    grouped[period].forEach((slot) => {
+                        const button = document.createElement("button");
+                        button.type = "button";
+                        button.className = "slot-button";
+                        button.textContent = slot.label;
+                        button.dataset.value = slot.value;
+                        button.dataset.label = slot.label;
+
+                        if (selectedSlotValue && selectedSlotValue === slot.value) {
+                            button.classList.add("is-selected");
+                        }
+
+                        button.addEventListener("click", function () {
+                            setSlotValue(slot.value, slot.label);
+                        });
+
+                        grid.appendChild(button);
+                    });
+
+                    section.appendChild(title);
+                    section.appendChild(grid);
+                    slotSections.appendChild(section);
+                });
+            }
+
+            async function loadMasters(selectedMasterId = "") {
+                const serviceId = serviceSelect.value;
+
+                resetMasters();
+                resetSlots();
+
+                if (!serviceId) {
+                    slotHelp.textContent = "Сначала выберите услугу.";
+                    return;
+                }
+
+                const response = await fetch(
+                    `/booking/api/masters/?service=${serviceId}&selected_master=${selectedMasterId}`
+                );
+                const data = await response.json();
+
+                resetMasters("Выберите мастера");
+
+                data.masters.forEach((master) => {
+                    const option = document.createElement("option");
+                    option.value = master.id;
+                    option.textContent = master.name;
+                    if (master.selected) {
+                        option.selected = true;
+                    }
+                    masterSelect.appendChild(option);
+                });
+
+                renderSummary();
+            }
+
+            async function loadSlots(selectedSlotValue = "") {
+                const serviceId = serviceSelect.value;
+                const masterId = masterSelect.value;
+                const bookingDate = dateInput.value;
+
+                slotSelect.innerHTML = "";
+                const loadingOption = document.createElement("option");
+                loadingOption.value = "";
+                loadingOption.textContent = "Загрузка...";
+                slotSelect.appendChild(loadingOption);
+
+                renderEmptySlotSections("Загружаем свободное время...");
+
+                if (!serviceId || !masterId || !bookingDate) {
+                    resetSlots();
+                    slotHelp.textContent = "Выберите услугу, мастера и дату — после этого появятся свободные слоты.";
+                    return;
+                }
+
+                slotHelp.textContent = "Загружаем свободное время...";
+
+                const response = await fetch(
+                    `/booking/api/slots/?service=${serviceId}&master=${masterId}&date=${bookingDate}`
+                );
+                const data = await response.json();
+
+                if (!data.slots.length) {
+                    slotSelect.innerHTML = "";
+                    const option = document.createElement("option");
+                    option.value = "";
+                    option.textContent = "Свободного времени нет";
+                    slotSelect.appendChild(option);
+
+                    renderEmptySlotSections("На выбранную дату свободных слотов нет.");
+                    slotHelp.textContent = "На выбранную дату свободных слотов нет. Попробуйте другой день или другого мастера.";
+                    renderSummary();
+                    return;
+                }
+
+                slotSelect.innerHTML = "";
+                const defaultOption = document.createElement("option");
+                defaultOption.value = "";
+                defaultOption.textContent = "Выберите время";
+                slotSelect.appendChild(defaultOption);
+
+                data.slots.forEach((slot) => {
+                    const option = document.createElement("option");
+                    option.value = slot.value;
+                    option.textContent = slot.label;
+                    if (slot.value === selectedSlotValue) {
+                        option.selected = true;
+                    }
+                    slotSelect.appendChild(option);
+                });
+
+                renderSlotSections(data.slots, selectedSlotValue);
+                slotHelp.textContent = "Выберите подходящее время из доступных слотов.";
+                renderSummary();
+            }
+
+            serviceSelect.addEventListener("change", async function () {
+                await loadMasters();
+                await loadSlots();
+                renderSummary();
+            });
+
+            masterSelect.addEventListener("change", async function () {
+                await loadSlots();
+                renderSummary();
+            });
+
+            dateInput.addEventListener("change", async function () {
+                await loadSlots();
+                renderSummary();
+            });
+
+            slotSelect.addEventListener("change", function () {
+                const selectedValue = slotSelect.value;
+                document.querySelectorAll(".slot-button").forEach((button) => {
+                    button.classList.toggle("is-selected", button.dataset.value === selectedValue);
+                });
+                renderSummary();
+            });
+
+            async function initializeFormFromUrl() {
+                if (serviceSelect.value) {
+                    await loadMasters(initialMasterValue);
+
+                    if (masterSelect.value && dateInput.value) {
+                        await loadSlots(initialSlotValue);
+                    }
+                } else {
+                    renderEmptySlotSections("Здесь появятся доступные слоты времени.");
+                }
+
+                renderSummary();
+            }
+
+            initializeFormFromUrl();
+        });
+    </script>
+{% endblock %}

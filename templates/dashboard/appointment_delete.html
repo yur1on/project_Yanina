@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Удалить запись{% endblock %}
+
+{% block content %}
+    <div class="section-header">
+        <h1>Удалить запись</h1>
+        <div class="actions">
+            <a href="{% url 'core:dashboard_appointments' %}" class="button button-light">Назад к записям</a>
+            <a href="{% url 'core:dashboard_client_detail' appointment.client.id %}" class="button button-outline">Карточка клиента</a>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <p><strong>Клиент:</strong> {{ appointment.client }}</p>
+        <p><strong>Мастер:</strong> {{ appointment.master }}</p>
+        <p><strong>Услуга:</strong> {{ appointment.service }}</p>
+        <p><strong>Дата:</strong> {{ appointment.start_at|date:"d.m.Y" }}</p>
+        <p><strong>Время:</strong> {{ appointment.start_at|date:"H:i" }}–{{ appointment.end_at|date:"H:i" }}</p>
+        <p><strong>Статус:</strong> {{ appointment.get_status_display }}</p>
+
+        <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
+
+        <p>Вы действительно хотите удалить эту запись?</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="actions">
+                <button type="submit">Да, удалить запись</button>
+                <a href="{% url 'core:dashboard_appointments' %}" class="button button-outline">Отмена</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

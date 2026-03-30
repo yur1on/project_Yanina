@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{{ service.name }}{% endblock %}
+
+{% block content %}
+    <section class="section">
+        <div class="content-card">
+            <h1>{{ service.name }}</h1>
+
+            {% if service.category %}
+                <p class="muted">{{ service.category.name }}</p>
+            {% endif %}
+
+            {% if service.short_description %}
+                <p><strong>{{ service.short_description }}</strong></p>
+            {% endif %}
+
+            {% if service.full_description %}
+                <p>{{ service.full_description }}</p>
+            {% elif service.description %}
+                <p>{{ service.description }}</p>
+            {% endif %}
+
+            <p><strong>Длительность:</strong> {{ service.duration_minutes }} мин.</p>
+            <p><strong>Цена:</strong> {{ service.base_price }}</p>
+
+            <div class="actions" style="margin-top: 18px;">
+                <a href="{% url 'booking:booking_form' %}?service={{ service.id }}" class="button">Записаться на услугу</a>
+                <a href="{% url 'catalog:service_list' %}" class="button button-outline">Все услуги</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-header">
+            <h2>Мастера, выполняющие услугу</h2>
+        </div>
+
+        <div class="cards-grid cards-grid-3">
+            {% for master in masters %}
+                <article class="public-card">
+                    <h3>{{ master.display_name }}</h3>
+                    <p>{{ master.short_bio|default:"Информация о мастере скоро появится." }}</p>
+
+                    <div class="public-card__actions">
+                        {% if master.slug %}
+                            <a href="{% url 'catalog:master_detail' master.slug %}" class="button">Смотреть профиль</a>
+                        {% endif %}
+                        <a href="{% url 'booking:booking_form' %}?service={{ service.id }}&master={{ master.id }}" class="button button-light">
+                            Записаться к мастеру
+                        </a>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="content-card">
+                    <p>Пока нет мастеров для этой услуги.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <style>
+        .cards-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .cards-grid-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .public-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .public-card__actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 980px) {
+            .cards-grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
