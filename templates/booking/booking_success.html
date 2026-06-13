@@ -1,3 +1,4 @@
+{% load static %}
 {% extends "base.html" %}
 
 {% block title %}Заявка отправлена{% endblock %}
@@ -43,7 +44,7 @@
         body.booking-success-page {
             background-image:
                 linear-gradient(180deg, rgba(255, 248, 242, 0.72) 0%, rgba(255, 248, 242, 0.62) 100%),
-                url("/media/booking/booking-background.png");
+                url("{% static 'site-backgrounds/booking/booking-background.png' %}");
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;

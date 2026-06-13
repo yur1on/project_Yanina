@@ -1,3 +1,4 @@
+{% load static %}
 {% extends "base.html" %}
 
 {% block title %}Онлайн-запись{% endblock %}
@@ -1477,7 +1478,7 @@
         body.booking-page-bg {
             background:
                 linear-gradient(0deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.72)),
-                url("/media/booking/booking-silhouette.png"),
+                url("{% static 'site-backgrounds/booking/booking-silhouette.png' %}"),
                 linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             background-size: cover, cover, cover;
             background-position: center center, right center, center center;
