@@ -32,7 +32,10 @@ services:
       - "8000"
     networks:
       - default
-      - caddy_shared
+      caddy_shared:
+        aliases:
+          - yanina-beauty-web
+          - yanina-beauty-web-1
 
   nginx:
     image: nginx:1.27-alpine
