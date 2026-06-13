@@ -11,13 +11,31 @@
 {% block extra_style %}
     <style>
         body.home-page {
-            background-image:
+            background: transparent;
+            position: relative;
+        }
+
+        body.home-page::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background:
                 linear-gradient(90deg, rgba(22, 16, 12, 0.14) 0%, rgba(22, 16, 12, 0.05) 30%, rgba(22, 16, 12, 0.02) 100%),
                 url("{% static 'site-backgrounds/home/hero-background.png' %}");
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
             background-attachment: fixed;
+        }
+
+        body.home-page::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02));
+            pointer-events: none;
         }
 
         body.home-page .page-container {
@@ -48,6 +66,10 @@
             }
 
             body.home-page {
+                background: transparent;
+            }
+
+            body.home-page::before {
                 background-attachment: scroll;
                 background-position: 32% center;
             }
@@ -60,6 +82,10 @@
             }
 
             body.home-page {
+                background: transparent;
+            }
+
+            body.home-page::before {
                 background-position: 28% center;
             }
         }
