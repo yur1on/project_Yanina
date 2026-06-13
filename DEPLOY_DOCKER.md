@@ -68,8 +68,15 @@ docker compose --env-file .env.prod down
 
 ## 8. HTTPS
 
-This stack is ready for domain binding through `nginx`, but it currently listens on port `80`.
-For production, the next step is to add SSL with Let's Encrypt and switch:
+If your server already has a shared `caddy` container, connect this project to the same Docker network and proxy to:
+
+```caddy
+yanina-beauty.by, www.yanina-beauty.by {
+    reverse_proxy yanina-beauty-web-1:8000
+}
+```
+
+If you use the standalone `nginx` profile instead, the next step is to add SSL with Let's Encrypt and switch:
 
 - `SECURE_SSL_REDIRECT=True`
 - `CSRF_TRUSTED_ORIGINS=https://yanina-beauty.by,https://www.yanina-beauty.by`
