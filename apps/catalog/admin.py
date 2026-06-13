@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 from .models import Master, MasterService, PortfolioItem, Service, ServiceCategory
 
@@ -44,6 +45,47 @@ class ServiceAdmin(admin.ModelAdmin):
     search_fields = ("name", "short_description", "full_description")
     autocomplete_fields = ("category",)
     prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ("image_preview",)
+
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "category",
+                    "name",
+                    "slug",
+                    "image",
+                    "image_preview",
+                    "full_description",
+                )
+            },
+        ),
+        (
+            "Параметры услуги",
+            {
+                "fields": (
+                    "duration_minutes",
+                    "base_price",
+                    "buffer_before_minutes",
+                    "buffer_after_minutes",
+                    "prepayment_required",
+                    "is_active",
+                    "sort_order",
+                )
+            },
+        ),
+    )
+
+    @admin.display(description="Превью")
+    def image_preview(self, obj):
+        if not obj or not obj.image:
+            return "Фото не загружено"
+        return format_html(
+            '<img src="{}" alt="{}" style="max-width: 220px; border-radius: 12px;" />',
+            obj.image.url,
+            obj.name,
+        )
 
 
 @admin.register(Master)

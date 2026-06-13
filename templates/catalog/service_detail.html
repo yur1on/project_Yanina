@@ -1,54 +1,84 @@
 {% extends "base.html" %}
 
 {% block title %}{{ service.name }}{% endblock %}
+{% block body_class %}service-detail-page{% endblock %}
 
 {% block content %}
-    <section class="section">
-        <div class="content-card">
+    <section class="detail-layout">
+        <div class="detail-panel">
+            <span class="eyebrow">Услуга</span>
             <h1>{{ service.name }}</h1>
-
             {% if service.category %}
                 <p class="muted">{{ service.category.name }}</p>
             {% endif %}
 
             {% if service.short_description %}
-                <p><strong>{{ service.short_description }}</strong></p>
+                <p class="lead">{{ service.short_description }}</p>
             {% endif %}
 
             {% if service.full_description %}
                 <p>{{ service.full_description }}</p>
-            {% elif service.description %}
-                <p>{{ service.description }}</p>
             {% endif %}
 
-            <p><strong>Длительность:</strong> {{ service.duration_minutes }} мин.</p>
-            <p><strong>Цена:</strong> {{ service.base_price }}</p>
+            <div class="info-list">
+                <div class="info-row"><span>Длительность</span><strong>{{ service.duration_minutes }} мин</strong></div>
+                <div class="info-row">
+                    <span>Цена</span>
+                    <strong>
+                        {% if service.min_effective_price and service.max_effective_price and service.min_effective_price != service.max_effective_price %}
+                            от {{ service.min_effective_price }} BYN
+                        {% elif service.min_effective_price %}
+                            {{ service.min_effective_price }} BYN
+                        {% else %}
+                            {{ service.base_price }} BYN
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="info-row"><span>Предоплата</span><strong>{% if service.prepayment_required %}требуется{% else %}не требуется{% endif %}</strong></div>
+            </div>
 
-            <div class="actions" style="margin-top: 18px;">
+            <div class="public-card__actions">
                 <a href="{% url 'booking:booking_form' %}?service={{ service.id }}" class="button">Записаться на услугу</a>
                 <a href="{% url 'catalog:service_list' %}" class="button button-outline">Все услуги</a>
             </div>
+        </div>
+
+        <div class="public-photo-card">
+            {% if service.image %}
+                <img src="{{ service.image.url }}" alt="{{ service.name }}" class="service-detail-photo">
+            {% else %}
+                <div class="photo-placeholder">Фото услуги</div>
+            {% endif %}
         </div>
     </section>
 
     <section class="section">
         <div class="section-header">
-            <h2>Мастера, выполняющие услугу</h2>
+            <div>
+                <span class="eyebrow">Мастера</span>
+                <h2>Кто выполняет эту услугу</h2>
+            </div>
         </div>
 
-        <div class="cards-grid cards-grid-3">
-            {% for master in masters %}
+        <div class="card-grid-3">
+            {% for offer in master_offers %}
                 <article class="public-card">
-                    <h3>{{ master.display_name }}</h3>
-                    <p>{{ master.short_bio|default:"Информация о мастере скоро появится." }}</p>
+                    <h3>{{ offer.master.display_name }}</h3>
+                    <p class="muted">{{ offer.master.short_bio|default:"Информация о мастере скоро появится." }}</p>
+
+                    <div class="listing-info">
+                        {% if offer.master.experience_years %}
+                            <div>Опыт: {{ offer.master.experience_years }} лет</div>
+                        {% endif %}
+                        <div>Цена: {{ offer.actual_price }} BYN</div>
+                        <div>Длительность: {{ offer.actual_duration_minutes }} мин</div>
+                    </div>
 
                     <div class="public-card__actions">
-                        {% if master.slug %}
-                            <a href="{% url 'catalog:master_detail' master.slug %}" class="button">Смотреть профиль</a>
+                        {% if offer.master.slug %}
+                            <a href="{% url 'catalog:master_detail' offer.master.slug %}" class="button button-outline">Профиль мастера</a>
                         {% endif %}
-                        <a href="{% url 'booking:booking_form' %}?service={{ service.id }}&master={{ master.id }}" class="button button-light">
-                            Записаться к мастеру
-                        </a>
+                        <a href="{% url 'booking:booking_form' %}?service={{ service.id }}&master={{ offer.master.id }}" class="button">Записаться</a>
                     </div>
                 </article>
             {% empty %}
@@ -58,35 +88,54 @@
             {% endfor %}
         </div>
     </section>
+{% endblock %}
 
+{% block extra_style %}
     <style>
-        .cards-grid {
+        body.service-detail-page {
+            background-image:
+                linear-gradient(180deg, rgba(255, 248, 242, 0.72) 0%, rgba(255, 248, 242, 0.62) 100%),
+                url("/media/services/service-list-background.png");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        body.service-detail-page .detail-panel,
+        body.service-detail-page .public-photo-card,
+        body.service-detail-page .public-card,
+        body.service-detail-page .content-card {
+            background: rgba(255, 255, 255, 0.994);
+            border-color: rgba(76, 56, 42, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        body.service-detail-page .page-container {
+            background: transparent;
+        }
+
+        .service-detail-photo {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            border-radius: inherit;
+        }
+
+        .photo-placeholder {
+            min-height: 100%;
             display: grid;
-            gap: 20px;
-        }
-
-        .cards-grid-3 {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .public-card {
-            background: #fff;
-            border-radius: 22px;
-            padding: 22px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-        }
-
-        .public-card__actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 14px;
-        }
-
-        @media (max-width: 980px) {
-            .cards-grid-3 {
-                grid-template-columns: 1fr;
-            }
+            place-items: center;
+            padding: 32px;
+            color: rgba(76, 56, 42, 0.58);
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-align: center;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(245, 238, 231, 0.92)),
+                radial-gradient(circle at top left, rgba(214, 227, 255, 0.28), transparent 38%);
         }
     </style>
 {% endblock %}

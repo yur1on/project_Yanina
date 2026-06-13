@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Заявка отправлена{% endblock %}
+{% block body_class %}booking-success-page{% endblock %}
 
 {% block content %}
     <section class="section">
@@ -8,9 +9,28 @@
             <div class="success-icon">✓</div>
             <h1>Заявка успешно отправлена</h1>
             <p>
-                Спасибо! Мы получили вашу заявку на запись.
+                Спасибо! Мы получили вашу заявку.
                 При необходимости с вами свяжутся для уточнения деталей.
             </p>
+
+            {% if booking_summary %}
+                <div class="success-summary">
+                    <h2>Детали вашей записи</h2>
+                    <div class="success-summary__grid">
+                        <div><strong>Услуга:</strong> {{ booking_summary.service_name }}</div>
+                        <div><strong>Мастер:</strong> {{ booking_summary.master_name }}</div>
+                        <div><strong>Дата:</strong> {{ booking_summary.date }}</div>
+                        <div><strong>Время:</strong> {{ booking_summary.time }}</div>
+                        <div><strong>Длительность:</strong> {{ booking_summary.duration_minutes }} мин</div>
+                        <div><strong>Цена:</strong> {{ booking_summary.price }} BYN</div>
+                        <div><strong>Телефон:</strong> {{ booking_summary.phone }}</div>
+                        <div>
+                            <strong>Предоплата:</strong>
+                            {% if booking_summary.prepayment_required %}требуется{% else %}не требуется{% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
 
             <div class="actions" style="justify-content: center; margin-top: 20px;">
                 <a href="{% url 'core:home' %}" class="button button-light">На главную</a>
@@ -20,6 +40,26 @@
     </section>
 
     <style>
+        body.booking-success-page {
+            background-image:
+                linear-gradient(180deg, rgba(255, 248, 242, 0.72) 0%, rgba(255, 248, 242, 0.62) 100%),
+                url("/media/booking/booking-background.png");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        body.booking-success-page .page-container {
+            background: transparent;
+        }
+
+        body.booking-success-page .success-card {
+            background: rgba(255, 255, 255, 0.994);
+            border-color: rgba(76, 56, 42, 0.2);
+            backdrop-filter: blur(12px);
+        }
+
         .success-card {
             max-width: 760px;
             margin: 0 auto;
@@ -34,8 +74,8 @@
             display: grid;
             place-items: center;
             margin: 0 auto 18px;
-            background: #dcfce7;
-            color: #15803d;
+            background: rgba(31, 26, 23, 0.08);
+            color: #1f1a17;
             font-size: 34px;
             font-weight: 700;
         }
@@ -45,6 +85,26 @@
             margin: 0 auto;
             color: #555;
             font-size: 17px;
+        }
+
+        .success-summary {
+            margin-top: 24px;
+            padding: 20px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.986);
+            border: 1px solid rgba(76, 56, 42, 0.18);
+            text-align: left;
+        }
+
+        .success-summary h2 {
+            margin: 0 0 14px;
+            font-size: 22px;
+            text-align: center;
+        }
+
+        .success-summary__grid {
+            display: grid;
+            gap: 10px;
         }
     </style>
 {% endblock %}

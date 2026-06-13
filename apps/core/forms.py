@@ -7,6 +7,7 @@ from django.utils import timezone
 from apps.booking.availability import AvailabilityService
 from apps.catalog.models import Master, Service
 from apps.clients.models import Client, ClientNote
+from apps.clients.utils import normalize_phone
 from apps.schedule.models import TimeBlock
 
 
@@ -234,8 +235,8 @@ class DashboardClientCreateForm(forms.ModelForm):
         }
 
     def clean_phone(self):
-        phone = self.cleaned_data["phone"].strip()
-        if not phone:
+        phone = normalize_phone(self.cleaned_data["phone"])
+        if not phone or len(phone) < 8:
             raise ValidationError("Телефон обязателен.")
         return phone
 
@@ -269,8 +270,8 @@ class DashboardClientEditForm(forms.ModelForm):
         }
 
     def clean_phone(self):
-        phone = self.cleaned_data["phone"].strip()
-        if not phone:
+        phone = normalize_phone(self.cleaned_data["phone"])
+        if not phone or len(phone) < 8:
             raise ValidationError("Телефон обязателен.")
         return phone
 

@@ -1,0 +1,2 @@
+-r local.txt
+gunicorn==23.0.0

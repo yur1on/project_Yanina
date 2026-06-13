@@ -1,15 +1,10 @@
-{% extends "base.html" %}
+{% extends "dashboard/base.html" %}
 
 {% block title %}Быстрый перенос записи{% endblock %}
+{% block admin_title %}Быстрый перенос записи{% endblock %}
+{% block admin_description %}<p>Перенесите клиента в новый слот без полного редактирования карточки записи.</p>{% endblock %}
 
-{% block content %}
-    <div class="section-header">
-        <h1>Быстрый перенос записи</h1>
-        <div class="actions">
-            <a href="{% url 'core:dashboard_calendar' %}?date={{ selected_date_value }}&master={{ appointment.master.id }}" class="button button-light">Назад в календарь</a>
-            <a href="{% url 'core:dashboard_appointment_edit' appointment.id %}" class="button button-outline">Полное редактирование</a>
-        </div>
-    </div>
+{% block admin_body %}
 
     <div class="content-card" style="margin-bottom: 24px;">
         <p><strong>Клиент:</strong> {{ appointment.client }}</p>

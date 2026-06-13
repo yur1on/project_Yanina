@@ -148,7 +148,7 @@ LANGUAGES = [
     ("ru", "Русский"),
 ]
 
-TIME_ZONE = "Europe/Vaduz"
+TIME_ZONE = "Europe/Minsk"
 
 USE_I18N = True
 USE_TZ = True
@@ -157,7 +157,7 @@ USE_TZ = True
 # =========================
 # STATIC FILES
 # =========================
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
@@ -169,7 +169,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # =========================
 # MEDIA FILES
 # =========================
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 
@@ -184,3 +184,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # =========================
 
 AUTH_USER_MODEL = "users.User"
+
+
+# =========================
+# TELEGRAM NOTIFICATIONS
+# =========================
+TELEGRAM_NOTIFICATIONS_ENABLED = config(
+    "TELEGRAM_NOTIFICATIONS_ENABLED",
+    default=False,
+    cast=bool,
+)
+TELEGRAM_BOT_TOKEN = config("TELEGRAM_BOT_TOKEN", default="")
+TELEGRAM_CHAT_ID = config("TELEGRAM_CHAT_ID", default="")
+APP_BASE_URL = config("APP_BASE_URL", default="")

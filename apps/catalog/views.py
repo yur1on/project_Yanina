@@ -1,6 +1,8 @@
+from django.db.models import Count, F, Max, Min, Prefetch, Q
+from django.db.models.functions import Coalesce
 from django.views.generic import DetailView, ListView
 
-from .models import Master, Service, ServiceCategory
+from .models import Master, MasterService, Service, ServiceCategory
 
 
 class ServiceListView(ListView):
@@ -9,24 +11,67 @@ class ServiceListView(ListView):
     context_object_name = "services"
 
     def get_queryset(self):
-        queryset = (
-            Service.objects.filter(is_active=True)
-            .select_related("category")
-            .order_by("category__sort_order", "category__name", "sort_order", "name")
-        )
-
         category_slug = self.request.GET.get("category")
-        if category_slug:
-            queryset = queryset.filter(category__slug=category_slug)
+        if not category_slug:
+            return Service.objects.none()
 
-        return queryset
+        return (
+            Service.objects.filter(
+                is_active=True,
+                category__is_active=True,
+                category__slug=category_slug,
+            )
+            .select_related("category")
+            .prefetch_related(
+                Prefetch(
+                    "master_services",
+                    queryset=MasterService.objects.filter(
+                        is_active=True,
+                        master__is_active=True,
+                        service__is_active=True,
+                    )
+                    .select_related("master", "service")
+                    .order_by("master__sort_order", "master__display_name"),
+                    to_attr="active_master_offers",
+                )
+            )
+            .annotate(
+                min_effective_price=Min(
+                    Coalesce("master_services__custom_price", F("base_price")),
+                    filter=Q(
+                        master_services__is_active=True,
+                        master_services__master__is_active=True,
+                    ),
+                ),
+                max_effective_price=Max(
+                    Coalesce("master_services__custom_price", F("base_price")),
+                    filter=Q(
+                        master_services__is_active=True,
+                        master_services__master__is_active=True,
+                    ),
+                ),
+            )
+            .order_by("sort_order", "name")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["categories"] = ServiceCategory.objects.filter(is_active=True).order_by(
-            "sort_order", "name"
+        categories = (
+            ServiceCategory.objects.filter(is_active=True)
+            .annotate(
+                active_service_count=Count(
+                    "services",
+                    filter=Q(services__is_active=True),
+                    distinct=True,
+                )
+            )
+            .filter(active_service_count__gt=0)
+            .order_by("sort_order", "name")
         )
-        context["current_category"] = self.request.GET.get("category", "")
+        current_category = self.request.GET.get("category", "")
+        context["categories"] = categories
+        context["current_category"] = current_category
+        context["current_category_obj"] = categories.filter(slug=current_category).first()
         return context
 
 
@@ -41,19 +86,35 @@ class ServiceDetailView(DetailView):
         return (
             Service.objects.filter(is_active=True)
             .select_related("category")
+            .annotate(
+                min_effective_price=Min(
+                    Coalesce("master_services__custom_price", F("base_price")),
+                    filter=Q(
+                        master_services__is_active=True,
+                        master_services__master__is_active=True,
+                    ),
+                ),
+                max_effective_price=Max(
+                    Coalesce("master_services__custom_price", F("base_price")),
+                    filter=Q(
+                        master_services__is_active=True,
+                        master_services__master__is_active=True,
+                    ),
+                ),
+            )
             .order_by("sort_order", "name")
         )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["masters"] = (
-            Master.objects.filter(
+        context["master_offers"] = (
+            self.object.master_services.filter(
                 is_active=True,
-                master_services__service=self.object,
-                master_services__is_active=True,
+                master__is_active=True,
+                service__is_active=True,
             )
-            .distinct()
-            .order_by("sort_order", "display_name")
+            .select_related("master", "service", "master__user")
+            .order_by("master__sort_order", "master__display_name")
         )
         context["related_services"] = (
             Service.objects.filter(
@@ -114,14 +175,37 @@ class MasterDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["master_services"] = (
+        master_services = list(
             self.object.master_services.filter(
                 is_active=True,
                 service__is_active=True,
             )
-            .select_related("service")
-            .order_by("service__sort_order", "service__name")
+            .select_related("service", "service__category")
+            .order_by(
+                "service__category__sort_order",
+                "service__category__name",
+                "service__sort_order",
+                "service__name",
+            )
         )
+        grouped_master_services = []
+
+        for item in master_services:
+            category = item.service.category
+            category_name = category.name if category else "Услуги"
+
+            if not grouped_master_services or grouped_master_services[-1]["category_name"] != category_name:
+                grouped_master_services.append(
+                    {
+                        "category_name": category_name,
+                        "items": [],
+                    }
+                )
+
+            grouped_master_services[-1]["items"].append(item)
+
+        context["master_services"] = master_services
+        context["grouped_master_services"] = grouped_master_services
         context["other_masters"] = (
             Master.objects.filter(is_active=True)
             .exclude(pk=self.object.pk)

@@ -3,8 +3,9 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Prefetch, Q
+from django.db.models import Case, DateTimeField, F, IntegerField, Prefetch, Value, When
 from django.http import JsonResponse
+from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
@@ -25,6 +26,72 @@ from apps.core.forms import (
     DashboardTimeOffEditForm,
 )
 from apps.schedule.models import ScheduleException, TimeBlock, WorkingHours
+
+WEEKDAY_LABELS_RU = {
+    1: "Пн",
+    2: "Вт",
+    3: "Ср",
+    4: "Чт",
+    5: "Пт",
+    6: "Сб",
+    7: "Вс",
+}
+
+
+def apply_appointment_search(queryset, search_query):
+    search_query = (search_query or "").strip()
+    if not search_query:
+        return queryset
+
+    terms = [term.casefold() for term in search_query.split() if term]
+    if not terms:
+        return queryset
+
+    matched_ids = []
+    for appointment in queryset:
+        values = [
+            appointment.client.first_name,
+            appointment.client.last_name,
+            f"{appointment.client.first_name} {appointment.client.last_name}".strip(),
+            appointment.client.phone,
+            appointment.client.email,
+            appointment.master.display_name,
+            appointment.service.name,
+        ]
+        haystack = " ".join(str(value or "").casefold() for value in values if value)
+        if all(term in haystack for term in terms):
+            matched_ids.append(appointment.id)
+
+    return queryset.filter(id__in=matched_ids)
+
+
+def apply_client_search(queryset, search_query):
+    search_query = (search_query or "").strip()
+    if not search_query:
+        return queryset
+
+    terms = [term.casefold() for term in search_query.split() if term]
+    if not terms:
+        return queryset
+
+    matched_ids = []
+    for client in queryset:
+        values = [
+            client.first_name,
+            client.last_name,
+            f"{client.first_name} {client.last_name}".strip(),
+            client.phone,
+            client.email,
+        ]
+        haystack = " ".join(str(value or "").casefold() for value in values if value)
+        if all(term in haystack for term in terms):
+            matched_ids.append(client.id)
+
+    return queryset.filter(id__in=matched_ids)
+
+
+def weekday_label_ru(target_date):
+    return WEEKDAY_LABELS_RU[target_date.isoweekday()]
 
 
 class HomePageView(TemplateView):
@@ -55,6 +122,9 @@ class ContactsPageView(TemplateView):
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/home.html"
 
+    def get(self, request, *args, **kwargs):
+        return redirect("core:dashboard_appointments")
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -83,8 +153,65 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
             .order_by("start_at")[:10]
         )
 
+        pending_appointments = (
+            Appointment.objects.select_related("client", "master", "service")
+            .filter(
+                status=Appointment.Status.PENDING,
+                start_at__gte=now,
+            )
+            .order_by("start_at")[:8]
+        )
+
+        week_days = []
+        week_end = today + timedelta(days=6)
+        appointments_this_week = (
+            Appointment.objects.filter(
+                start_at__date__gte=today,
+                start_at__date__lte=week_end,
+            )
+            .values("start_at__date", "status")
+            .order_by("start_at__date")
+        )
+        appointments_map = {}
+        for item in appointments_this_week:
+            target_date = item["start_at__date"]
+            status = item["status"]
+            day_stats = appointments_map.setdefault(
+                target_date,
+                {
+                    "total": 0,
+                    "pending": 0,
+                    "confirmed": 0,
+                },
+            )
+            day_stats["total"] += 1
+            if status == Appointment.Status.PENDING:
+                day_stats["pending"] += 1
+            if status == Appointment.Status.CONFIRMED:
+                day_stats["confirmed"] += 1
+
+        for offset in range(7):
+            target_date = today + timedelta(days=offset)
+            day_stats = appointments_map.get(
+                target_date,
+                {"total": 0, "pending": 0, "confirmed": 0},
+            )
+            week_days.append(
+                {
+                    "date": target_date,
+                    "label": target_date.strftime("%d.%m"),
+                    "weekday": weekday_label_ru(target_date),
+                    "total": day_stats["total"],
+                    "pending": day_stats["pending"],
+                    "confirmed": day_stats["confirmed"],
+                    "calendar_url": f"{reverse('core:dashboard_calendar')}?{urlencode({'date': target_date.isoformat()})}",
+                    "is_today": target_date == today,
+                }
+            )
+
         context["appointments_today"] = appointments_today
         context["upcoming_appointments"] = upcoming_appointments
+        context["pending_appointments"] = pending_appointments
         context["today_total"] = appointments_today.count()
         context["today_pending"] = appointments_today.filter(
             status=Appointment.Status.PENDING
@@ -95,6 +222,27 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
         context["today_completed"] = appointments_today.filter(
             status=Appointment.Status.COMPLETED
         ).count()
+        context["today_no_show"] = appointments_today.filter(
+            status=Appointment.Status.NO_SHOW
+        ).count()
+        context["active_clients_today"] = appointments_today.values("client_id").distinct().count()
+        context["week_days"] = week_days
+        context["pending_total"] = Appointment.objects.filter(
+            status=Appointment.Status.PENDING,
+            start_at__gte=now,
+        ).count()
+        context["cancelled_recent"] = Appointment.objects.filter(
+            status=Appointment.Status.CANCELLED,
+            cancelled_at__date__gte=today - timedelta(days=7),
+        ).count()
+        context["no_show_recent"] = Appointment.objects.filter(
+            status=Appointment.Status.NO_SHOW,
+            start_at__date__gte=today - timedelta(days=30),
+        ).count()
+        context["today_calendar_url"] = f"{reverse('core:dashboard_calendar')}?{urlencode({'date': today.isoformat()})}"
+        context["today_appointments_url"] = f"{reverse('core:dashboard_appointments')}?{urlencode({'status': '', 'master': '', 'q': ''})}"
+        context["pending_appointments_url"] = f"{reverse('core:dashboard_appointments')}?{urlencode({'status': Appointment.Status.PENDING})}"
+        context["confirmed_today_url"] = f"{reverse('core:dashboard_appointments')}?{urlencode({'status': Appointment.Status.CONFIRMED})}"
 
         return context
 
@@ -106,9 +254,27 @@ class DashboardAppointmentListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
+        now = timezone.now()
         queryset = (
             Appointment.objects.select_related("client", "master", "service")
-            .order_by("-start_at")
+            .annotate(
+                is_past_order=Case(
+                    When(start_at__lt=now, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+                upcoming_sort_at=Case(
+                    When(start_at__gte=now, then=F("start_at")),
+                    default=Value(None),
+                    output_field=DateTimeField(),
+                ),
+                past_sort_at=Case(
+                    When(start_at__lt=now, then=F("start_at")),
+                    default=Value(None),
+                    output_field=DateTimeField(),
+                ),
+            )
+            .order_by("is_past_order", "upcoming_sort_at", "-past_sort_at")
         )
 
         status = self.request.GET.get("status")
@@ -121,20 +287,65 @@ class DashboardAppointmentListView(LoginRequiredMixin, ListView):
         if master_id:
             queryset = queryset.filter(master_id=master_id)
 
-        if q:
-            queryset = queryset.filter(
-                Q(client__first_name__icontains=q)
-                | Q(client__last_name__icontains=q)
-                | Q(client__phone__icontains=q)
-                | Q(client__email__icontains=q)
-                | Q(master__display_name__icontains=q)
-                | Q(service__name__icontains=q)
-            )
-
-        return queryset
+        return apply_appointment_search(queryset, q)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        now = timezone.localtime()
+        today = now.date()
+        tomorrow = today + timedelta(days=1)
+
+        today_start = timezone.make_aware(
+            datetime.combine(today, time.min),
+            timezone.get_current_timezone(),
+        )
+        tomorrow_start = timezone.make_aware(
+            datetime.combine(tomorrow, time.min),
+            timezone.get_current_timezone(),
+        )
+
+        appointments_today = (
+            Appointment.objects.select_related("client", "master", "service")
+            .filter(start_at__gte=today_start, start_at__lt=tomorrow_start)
+            .order_by("start_at")
+        )
+
+        pending_appointments = (
+            Appointment.objects.select_related("client", "master", "service")
+            .filter(
+                status=Appointment.Status.PENDING,
+                start_at__gte=now,
+            )
+            .order_by("start_at")[:4]
+        )
+
+        week_days = []
+        week_end = today + timedelta(days=4)
+        appointments_this_week = (
+            Appointment.objects.filter(
+                start_at__date__gte=today,
+                start_at__date__lte=week_end,
+            )
+            .values("start_at__date")
+            .order_by("start_at__date")
+        )
+        appointments_map = {}
+        for item in appointments_this_week:
+            target_date = item["start_at__date"]
+            appointments_map[target_date] = appointments_map.get(target_date, 0) + 1
+
+        for offset in range(5):
+            target_date = today + timedelta(days=offset)
+            week_days.append(
+                {
+                    "label": target_date.strftime("%d.%m"),
+                    "weekday": weekday_label_ru(target_date),
+                    "total": appointments_map.get(target_date, 0),
+                    "calendar_url": f"{reverse('core:dashboard_calendar')}?{urlencode({'date': target_date.isoformat()})}",
+                    "is_today": target_date == today,
+                }
+            )
+
         context["statuses"] = Appointment.Status.choices
         context["masters"] = Master.objects.filter(is_active=True).order_by(
             "display_name"
@@ -142,6 +353,22 @@ class DashboardAppointmentListView(LoginRequiredMixin, ListView):
         context["current_status"] = self.request.GET.get("status", "")
         context["current_master"] = self.request.GET.get("master", "")
         context["current_q"] = self.request.GET.get("q", "")
+        context["today_total"] = appointments_today.count()
+        context["pending_total"] = Appointment.objects.filter(
+            status=Appointment.Status.PENDING,
+            start_at__gte=now,
+        ).count()
+        context["today_confirmed"] = appointments_today.filter(
+            status=Appointment.Status.CONFIRMED
+        ).count()
+        context["today_no_show"] = appointments_today.filter(
+            status=Appointment.Status.NO_SHOW
+        ).count()
+        context["pending_appointments"] = pending_appointments
+        context["week_days"] = week_days
+        context["today_calendar_url"] = f"{reverse('core:dashboard_calendar')}?{urlencode({'date': today.isoformat()})}"
+        context["today_date"] = today
+        context["tomorrow_date"] = tomorrow
         return context
 
 
@@ -157,6 +384,7 @@ class DashboardCalendarView(LoginRequiredMixin, TemplateView):
 
         selected_date = self._get_selected_date()
         selected_master_id = self.request.GET.get("master", "")
+        q = self.request.GET.get("q", "")
 
         masters = Master.objects.filter(is_active=True).order_by("display_name")
         services = Service.objects.filter(is_active=True).order_by("sort_order", "name")
@@ -184,6 +412,8 @@ class DashboardCalendarView(LoginRequiredMixin, TemplateView):
             appointments = appointments.filter(master_id=selected_master_id)
             timeoffs = timeoffs.filter(master_id=selected_master_id)
             exceptions = exceptions.filter(master_id=selected_master_id)
+
+        appointments = apply_appointment_search(appointments, q)
 
         hours = list(range(self.START_HOUR, self.END_HOUR + 1))
         calendar_rows = []
@@ -241,6 +471,7 @@ class DashboardCalendarView(LoginRequiredMixin, TemplateView):
         context["day_grid_rows"] = day_grid_rows
         context["prev_date"] = (selected_date - timedelta(days=1)).isoformat()
         context["next_date"] = (selected_date + timedelta(days=1)).isoformat()
+        context["current_q"] = q
 
         return context
 
@@ -449,21 +680,27 @@ class DashboardAppointmentStatusUpdateView(LoginRequiredMixin, View):
         "confirm": Appointment.Status.CONFIRMED,
         "complete": Appointment.Status.COMPLETED,
         "cancel": Appointment.Status.CANCELLED,
+        "no_show": Appointment.Status.NO_SHOW,
     }
 
     def post(self, request, pk):
         appointment = get_object_or_404(Appointment, pk=pk)
         action = request.POST.get("action")
-        redirect_to = request.POST.get("redirect_to") or "core:dashboard_home"
+        redirect_to = request.POST.get("redirect_to") or "core:dashboard_appointments"
 
         new_status = self.ALLOWED_STATUSES.get(action)
         if not new_status:
             messages.error(request, "Некорректное действие.")
             return redirect(redirect_to)
 
-        comment = ""
-        if new_status == Appointment.Status.CANCELLED:
-            comment = "Отменено из dashboard"
+        comment = (request.POST.get("comment") or "").strip()
+
+        if new_status == Appointment.Status.CANCELLED and not comment:
+            messages.error(request, "Укажите причину отмены записи.")
+            return redirect(redirect_to)
+
+        if new_status == Appointment.Status.NO_SHOW and not comment:
+            comment = "Клиент не пришёл"
 
         try:
             BookingService.change_status(
@@ -762,9 +999,23 @@ class DashboardAppointmentDeleteView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         appointment = get_object_or_404(Appointment, pk=pk)
-        appointment_display = str(appointment)
-        appointment.delete()
-        messages.success(request, f"Запись удалена: {appointment_display}")
+        cancel_reason = (request.POST.get("cancel_reason") or "").strip()
+        if not cancel_reason:
+            messages.error(request, "Укажите причину отмены записи.")
+            return render(request, self.template_name, {"appointment": appointment})
+
+        try:
+            BookingService.change_status(
+                appointment=appointment,
+                new_status=Appointment.Status.CANCELLED,
+                changed_by=request.user,
+                comment=cancel_reason,
+            )
+        except Exception as exc:
+            messages.error(request, f"Не удалось отменить запись: {exc}")
+            return render(request, self.template_name, {"appointment": appointment})
+
+        messages.success(request, "Запись отменена и сохранена в истории клиента.")
         return redirect("core:dashboard_appointments")
 
 
@@ -1130,13 +1381,7 @@ class DashboardAvailableClientsView(LoginRequiredMixin, View):
         q = request.GET.get("q", "").strip()
 
         queryset = Client.objects.all().order_by("first_name", "last_name", "phone")
-        if q:
-            queryset = queryset.filter(
-                Q(first_name__icontains=q)
-                | Q(last_name__icontains=q)
-                | Q(phone__icontains=q)
-                | Q(email__icontains=q)
-            )
+        queryset = apply_client_search(queryset, q)
 
         clients = queryset[:20]
 

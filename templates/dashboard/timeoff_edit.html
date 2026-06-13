@@ -1,14 +1,10 @@
-{% extends "base.html" %}
+{% extends "dashboard/base.html" %}
 
 {% block title %}Редактировать блокировку{% endblock %}
+{% block admin_title %}Редактировать блокировку{% endblock %}
+{% block admin_description %}<p>Измените параметры блокировки времени, если график мастера поменялся.</p>{% endblock %}
 
-{% block content %}
-    <div class="section-header">
-        <h1>Редактировать блокировку времени</h1>
-        <div class="actions">
-            <a href="{% url 'core:dashboard_calendar' %}?date={{ timeoff.start_at|date:'Y-m-d' }}&master={{ timeoff.master.id }}" class="button button-light">Назад в календарь</a>
-        </div>
-    </div>
+{% block admin_body %}
 
     <div class="content-card">
         <form method="post">

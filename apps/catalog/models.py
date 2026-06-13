@@ -36,6 +36,7 @@ class Service(models.Model):
     )
     name = models.CharField("Название", max_length=255, unique=True)
     slug = models.SlugField("Slug", max_length=255, unique=True, blank=True)
+    image = models.ImageField("Фото услуги", upload_to="services/", blank=True, null=True)
     short_description = models.CharField("Краткое описание", max_length=500, blank=True)
     full_description = models.TextField("Полное описание", blank=True)
 

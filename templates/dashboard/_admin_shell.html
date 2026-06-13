@@ -1,0 +1,20 @@
+<section class="admin-shell">
+    <div class="admin-shell__top">
+        <div>
+            <span class="eyebrow">Администратор</span>
+            <h1 class="admin-shell__title">{{ admin_title|default:"Администратор" }}</h1>
+            {% if admin_description %}
+                <p class="admin-shell__text">{{ admin_description }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="admin-shell__nav">
+        <a href="{% url 'core:dashboard_home' %}" class="admin-tab {% if request.resolver_match.url_name == 'dashboard_home' %}is-active{% endif %}">Обзор</a>
+        <a href="{% url 'core:dashboard_appointments' %}" class="admin-tab {% if request.resolver_match.url_name == 'dashboard_appointments' %}is-active{% endif %}">Записи</a>
+        <a href="{% url 'core:dashboard_calendar' %}" class="admin-tab {% if request.resolver_match.url_name == 'dashboard_calendar' %}is-active{% endif %}">Календарь</a>
+        <a href="{% url 'core:dashboard_appointment_create' %}" class="admin-tab {% if request.resolver_match.url_name == 'dashboard_appointment_create' %}is-active{% endif %}">Новая запись</a>
+        <a href="{% url 'core:dashboard_timeoff_create' %}" class="admin-tab {% if request.resolver_match.url_name == 'dashboard_timeoff_create' %}is-active{% endif %}">Блокировка</a>
+        <a href="{% url 'admin:index' %}" class="admin-tab">Django admin</a>
+    </div>
+</section>

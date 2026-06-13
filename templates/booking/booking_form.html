@@ -1,183 +1,243 @@
 {% extends "base.html" %}
 
 {% block title %}Онлайн-запись{% endblock %}
+{% block body_class %}booking-page-bg{% endblock %}
+{% block extra_head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+{% endblock %}
 
 {% block content %}
     <section class="booking-page">
-        <div class="booking-page__intro">
-            <span class="booking-page__badge">Онлайн-запись</span>
-            <h1>Запишитесь в пару шагов</h1>
-            <p>
-                Выберите услугу, мастера, дату и свободное время.
-                После этого оставьте свои контакты — и заявка сразу попадёт в систему.
-            </p>
-        </div>
+        <div class="booking-container">
+            <div class="booking-header">
+                <span class="booking-badge">Запись онлайн</span>
+                <h1>Выберите удобное время</h1>
+                <p>Заполните форму, и мы подтвердим запись в ближайшее время.</p>
+            </div>
 
-        <div class="booking-layout">
-            <div class="booking-main">
-                <div class="content-card booking-card">
+            <div class="booking-grid">
+                <div class="booking-main">
+                    <div class="content-card booking-card booking-form-wrapper shadow-sm">
                     <form method="post" id="booking-form">
                         {% csrf_token %}
 
                         {% if form.non_field_errors %}
-                            <div class="form-errors-box">
+                            <div class="form-errors-box alert-message" role="alert">
                                 {{ form.non_field_errors }}
                             </div>
                         {% endif %}
 
-                        <div class="booking-section">
-                            <div class="booking-section__title">
-                                <span class="booking-step">1</span>
-                                <div>
-                                    <h2>Выбор записи</h2>
-                                    <p>Сначала выберите услугу, мастера и дату.</p>
-                                </div>
+                        <div class="progress-steps">
+                            <div class="step active" data-step="1">
+                                <div class="step-number">1</div>
+                                <div class="step-text">Выбор записи</div>
                             </div>
+                            <div class="step-line"></div>
+                            <div class="step" data-step="2" id="contacts-pill">
+                                <div class="step-number">2</div>
+                                <div class="step-text">Ваши контакты</div>
+                            </div>
+                        </div>
 
-                            <div class="grid grid-2">
-                                <div class="form-row">
-                                    <label for="{{ form.service.id_for_label }}">{{ form.service.label }}</label>
-                                    {{ form.service }}
-                                    {{ form.service.errors }}
+                        <div class="form-section active" id="step1">
+                            <div class="booking-section">
+                                <div class="form-fields-grid">
+                                    {% if selected_master %}
+                                        <div class="booking-master-hidden">{{ form.master }}</div>
+                                        {% if form.master.errors %}
+                                            <div class="field-group full-width">
+                                                {{ form.master.errors }}
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="field-group">
+                                            <label for="{{ form.master.id_for_label }}">{{ form.master.label }}</label>
+                                            {{ form.master }}
+                                            {{ form.master.errors }}
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="field-group">
+                                        <label for="{{ form.service.id_for_label }}">{{ form.service.label }}</label>
+                                        {{ form.service }}
+                                        {{ form.service.errors }}
+                                    </div>
+
+                                    <div class="field-group field-group--date">
+                                        <label for="{{ form.booking_date.id_for_label }}">{{ form.booking_date.label }}</label>
+                                        {{ form.booking_date }}
+                                        {{ form.booking_date.errors }}
+                                        <div class="field-hint" id="dateHelp">
+                                            После выбора мастера и услуги календарь покажет зелёные и красные дни.
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="form-row">
-                                    <label for="{{ form.master.id_for_label }}">{{ form.master.label }}</label>
-                                    {{ form.master }}
-                                    {{ form.master.errors }}
-                                </div>
-
-                                <div class="form-row form-row--date">
-                                    <label for="{{ form.booking_date.id_for_label }}">{{ form.booking_date.label }}</label>
-                                    {{ form.booking_date }}
-                                    {{ form.booking_date.errors }}
-                                    <div class="date-help">Нажмите на поле, чтобы выбрать удобный день.</div>
-                                </div>
-
-                                <div class="form-row">
-                                    <label for="{{ form.slot.id_for_label }}">{{ form.slot.label }}</label>
-
+                                <div class="time-slots-wrapper" id="timeSlotsWrapper">
+                                    <div class="time-slots-header">
+                                        <span class="time-slots-title">Свободное время</span>
+                                        <span class="time-slots-hint" id="slotHint">Выберите мастера, услугу и дату — после этого появятся свободные слоты.</span>
+                                    </div>
                                     <div class="slot-select-hidden">
                                         {{ form.slot }}
                                     </div>
                                     {{ form.slot.errors }}
-
-                                    <div class="slot-help" id="slot-help">
-                                        Выберите услугу, мастера и дату — свободное время подгрузится автоматически.
-                                    </div>
-
-                                    <div id="slot-sections" class="slot-sections">
-                                        <div class="slot-grid__empty">
-                                            Здесь появятся доступные слоты времени.
+                                    <div id="slotSections" class="time-slots-grid">
+                                        <div class="slot-group">
+                                            <div class="slot-group-title">Свободные слоты</div>
+                                            <div class="slot-grid__empty">Здесь появятся доступные слоты времени.</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="booking-summary" id="booking-summary">
-                                <div class="booking-summary__empty">
-                                    Когда вы выберете параметры записи, здесь появится краткая сводка.
-                                </div>
-                            </div>
                         </div>
 
-                        <div class="booking-divider"></div>
-
-                        <div class="booking-section">
-                            <div class="booking-section__title">
-                                <span class="booking-step">2</span>
-                                <div>
-                                    <h2>Ваши контакты</h2>
-                                    <p>Эти данные нужны для подтверждения и связи с вами.</p>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-2">
-                                <div class="form-row">
+                        <div class="form-section" id="step2">
+                            <div class="booking-section">
+                            <div class="form-fields-grid two-columns">
+                                <div class="field-group">
                                     <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
                                     {{ form.first_name }}
                                     {{ form.first_name.errors }}
                                 </div>
 
-                                <div class="form-row">
+                                <div class="field-group">
                                     <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
                                     {{ form.last_name }}
                                     {{ form.last_name.errors }}
                                 </div>
 
-                                <div class="form-row">
+                                <div class="field-group">
                                     <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
                                     {{ form.phone }}
                                     {{ form.phone.errors }}
                                 </div>
 
-                                <div class="form-row">
+                                <div class="field-group">
                                     <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
                                     {{ form.email }}
                                     {{ form.email.errors }}
                                 </div>
-                            </div>
 
-                            <div class="form-row">
-                                <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
-                                {{ form.comment }}
-                                {{ form.comment.errors }}
+                                <div class="field-group full-width" id="booking-block-comment">
+                                    <label for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+                                    {{ form.comment }}
+                                    {{ form.comment.errors }}
+                                </div>
                             </div>
                         </div>
+                        </div>
 
-                        <div class="booking-submit">
-                            <button type="submit" class="button booking-submit__button">Отправить заявку</button>
-                            <p class="booking-submit__note">
-                                После отправки заявка появится у администратора, и с вами свяжутся при необходимости.
-                            </p>
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" id="prevBtn" style="display: none;">Назад</button>
+                            <button type="button" class="btn-primary" id="nextBtn">Далее</button>
+                            <button type="submit" class="btn-primary" id="submitBtn" style="display: none;">Отправить заявку</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <aside class="booking-sidebar">
-                <div class="content-card booking-side-card">
-                    <h3>Как проходит запись</h3>
-                    <ol class="booking-side-list">
-                        <li>Выбираете услугу</li>
-                        <li>Подбираете мастера</li>
-                        <li>Смотрите свободные слоты</li>
-                        <li>Оставляете контакты</li>
-                        <li>Отправляете заявку</li>
-                    </ol>
+                {% if selected_master %}
+                    <div class="content-card booking-side-panel booking-side-panel--master info-card shadow-sm">
+                        <div class="booking-master-card booking-master-card--side">
+                            <div class="info-card-title">Мастер</div>
+                            <div class="info-card-value">{{ selected_master.display_name }}</div>
+                            <p class="info-card-desc">{{ selected_master.short_bio|default:"Для записи доступны только активные услуги этого мастера." }}</p>
+                            <div class="services-list">
+                                {% for item in selected_master.master_services.all %}
+                                    {% if item.is_active and item.service.is_active %}
+                                        <span class="service-tag">{{ item.service.name }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="content-card booking-side-panel booking-side-panel--overview info-card summary-card shadow-sm" id="summaryCard" style="display: none;">
+                    <div class="info-card-title">Ваша запись</div>
+                    <div id="summaryContent"></div>
                 </div>
 
-                <div class="content-card booking-side-card booking-side-card--accent">
-                    <h3>Важно</h3>
-                    <p>
-                        Если на выбранную дату нет свободного времени, попробуйте выбрать другого мастера
-                        или соседний день.
-                    </p>
+                <div class="content-card booking-side-panel booking-side-panel--note info-card hint-card shadow-sm">
+                    <div class="info-card-title">Подсказка</div>
+                    <p class="info-card-desc">Зелёные дни свободны, красные полностью заняты. Если времени нет, попробуйте соседний день.</p>
                 </div>
             </aside>
         </div>
+        </div>
     </section>
+
+    {{ service_meta|json_script:"service-meta-data" }}
 
     <style>
         .booking-page {
+            min-height: 100vh;
+            padding: 24px 0 40px;
             display: grid;
-            gap: 24px;
+            gap: 30px;
+        }
+
+        .booking-container {
+            width: min(100%, 1200px);
+            margin: 0 auto;
+        }
+
+        .booking-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .booking-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #8a7060;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .booking-header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin: 0 0 12px;
+            color: #2c3e50;
+            letter-spacing: -0.03em;
+        }
+
+        .booking-header p {
+            font-size: 18px;
+            color: #6b7280;
+            margin: 0;
         }
 
         .booking-page__intro {
-            background: linear-gradient(135deg, #fff 0%, #faf5ff 100%);
-            border-radius: 24px;
-            padding: 32px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.994);
+            border: 1px solid rgba(76, 56, 42, 0.2);
+            border-radius: 34px;
+            padding: 34px;
+            box-shadow: 0 22px 55px rgba(38, 24, 15, 0.08);
         }
 
         .booking-page__badge {
             display: inline-block;
-            padding: 6px 12px;
+            padding: 8px 14px;
             border-radius: 999px;
-            background: #f3e8ff;
-            color: #7c3aed;
-            font-weight: 600;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(35, 24, 16, 0.1);
+            color: #74675f;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
             margin-bottom: 12px;
         }
 
@@ -194,211 +254,399 @@
             max-width: 760px;
         }
 
+        .booking-grid,
         .booking-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
-            gap: 24px;
+            grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.7fr);
+            gap: 28px;
             align-items: start;
         }
 
-        .booking-card {
-            padding: 28px;
+        .booking-card,
+        .booking-form-wrapper {
+            padding: 32px;
+            border-radius: 24px;
         }
 
-        .booking-section {
-            display: grid;
-            gap: 18px;
-        }
-
-        .booking-section__title {
+        .booking-sidebar {
             display: flex;
-            gap: 14px;
-            align-items: flex-start;
+            flex-direction: column;
+            gap: 20px;
+            align-content: start;
+            position: sticky;
+            top: 92px;
         }
 
-        .booking-section__title h2 {
-            margin: 0 0 6px;
-            font-size: 22px;
+        .progress-steps {
+            display: flex;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid rgba(76, 56, 42, 0.1);
         }
 
-        .booking-section__title p {
-            margin: 0;
-            color: #666;
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
         }
 
-        .booking-step {
-            width: 34px;
-            height: 34px;
-            border-radius: 999px;
-            display: grid;
-            place-items: center;
-            background: #7c3aed;
-            color: #fff;
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: rgba(76, 56, 42, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 700;
-            flex-shrink: 0;
-            margin-top: 2px;
+            color: #6b7280;
+            transition: all 0.3s;
         }
 
-        .booking-divider {
-            height: 1px;
-            background: #eee;
-            margin: 28px 0;
+        .step.active .step-number {
+            background: #1f1a17;
+            color: #fffdfa;
+            box-shadow: 0 0 0 4px rgba(31, 26, 23, 0.12);
+        }
+
+        .step.completed .step-number {
+            background: #2f7d32;
+            color: #ffffff;
+        }
+
+        .step-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .step.active .step-text,
+        .step.completed .step-text {
+            color: #2c3e50;
+        }
+
+        .step-line {
+            flex: 0.5;
+            height: 2px;
+            background: rgba(76, 56, 42, 0.1);
+            margin: 0 16px;
+        }
+
+        .form-section {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .booking-master-card {
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            display: grid;
+            gap: 10px;
+        }
+
+        .booking-master-card--side h3 {
+            font-size: 30px;
+        }
+
+        .booking-master-card__label {
+            color: #74675f;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .booking-master-card h3 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .booking-master-card__services {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .booking-master-hidden {
+            display: none;
+        }
+
+        .is-hidden {
+            display: none !important;
+        }
+
+        .form-fields-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-fields-grid.two-columns {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 2px solid rgba(76, 56, 42, 0.1);
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            min-height: 48px;
+            padding: 12px 24px;
+            border-radius: 999px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #1f1a17;
+            color: #ffffff;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(31, 26, 23, 0.18);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #2c3e50;
+            border: 1px solid rgba(76, 56, 42, 0.16);
+        }
+
+        .btn-secondary:hover {
+            border-color: rgba(76, 56, 42, 0.3);
+            transform: translateY(-1px);
         }
 
         .slot-select-hidden {
             display: none;
         }
 
-        .slot-help,
-        .date-help {
-            margin-top: 8px;
-            color: #666;
-            font-size: 14px;
-            line-height: 1.45;
+        .field-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .slot-sections {
-            display: grid;
-            gap: 18px;
-            margin-top: 14px;
+        .field-hint,
+        .time-slots-hint {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
         }
 
-        .slot-section {
-            border: 1px solid #e9ddff;
-            border-radius: 18px;
-            padding: 14px;
-            background: #fcfaff;
+        .time-slots-wrapper {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 2px solid #ecf0f1;
         }
 
-        .slot-section__title {
-            margin: 0 0 12px;
-            font-size: 16px;
+        .time-slots-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .time-slots-title {
+            font-size: 18px;
             font-weight: 700;
-            color: #4b5563;
+            color: #2c3e50;
+        }
+
+        .time-slots-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .slot-group {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .slot-group-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ecf0f1;
         }
 
         .slot-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 10px;
         }
 
         .slot-grid__empty {
-            padding: 14px 16px;
-            border: 1px dashed #d8c8ff;
-            border-radius: 14px;
-            color: #777;
-            background: #faf7ff;
-            font-size: 14px;
+            padding: 20px;
+            text-align: center;
+            color: #7f8c8d;
+            background: transparent;
+            font-size: 13px;
         }
 
         .slot-button {
-            appearance: none;
-            border: 1px solid #d7c0ff;
-            background: #f5efff;
-            color: #4a2f7a;
-            border-radius: 14px;
-            padding: 12px 10px;
-            font-weight: 700;
-            font-size: 15px;
+            padding: 10px;
+            background: white;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            transition: .15s ease;
-            box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08);
+            transition: all 0.2s;
+            color: #2c3e50;
         }
 
         .slot-button:hover {
-            border-color: #7c3aed;
-            background: #eee3ff;
-            color: #3f2470;
-            transform: translateY(-1px);
+            border-color: #e67e22;
+            transform: translateY(-2px);
         }
 
         .slot-button.is-selected {
-            background: #7c3aed;
-            color: #fff;
-            border-color: #7c3aed;
-            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.22);
+            background: #e67e22;
+            border-color: #e67e22;
+            color: white;
         }
 
-        .booking-summary {
-            border: 1px solid #ececec;
-            background: #fafafa;
-            border-radius: 18px;
-            padding: 16px 18px;
-        }
-
-        .booking-summary__empty {
-            color: #777;
-            font-size: 14px;
-        }
-
-        .booking-summary__grid {
-            display: grid;
-            gap: 8px;
-        }
-
-        .booking-summary__row {
+        .summary-item {
             display: flex;
             justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #ecf0f1;
             gap: 12px;
-            font-size: 15px;
         }
 
-        .booking-summary__label {
-            color: #666;
+        .summary-item:last-child {
+            border-bottom: none;
         }
 
-        .booking-summary__value {
+        .summary-label {
+            font-size: 13px;
+            color: #7f8c8d;
+        }
+
+        .summary-value {
             font-weight: 600;
+            color: #2c3e50;
             text-align: right;
         }
 
-        .booking-submit {
-            margin-top: 28px;
-            display: grid;
-            gap: 10px;
-        }
-
-        .booking-submit__button {
-            width: auto;
-            min-width: 220px;
-        }
-
-        .booking-submit__note {
-            margin: 0;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .booking-side-card {
+        .booking-side-panel {
             padding: 22px;
+            background: linear-gradient(180deg, rgba(255, 252, 249, 0.996), rgba(255, 255, 255, 0.996));
+            border: 1px solid rgba(176, 142, 118, 0.34);
+            box-shadow: 0 14px 30px rgba(82, 57, 37, 0.08);
         }
 
-        .booking-side-card h3 {
-            margin-top: 0;
-            margin-bottom: 12px;
+        .info-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
         }
 
-        .booking-side-list {
-            margin: 0;
-            padding-left: 18px;
-            color: #444;
-            display: grid;
+        .info-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .info-card-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+
+        .info-card-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .info-card-desc {
+            font-size: 14px;
+            color: #7f8c8d;
+            line-height: 1.5;
+        }
+
+        .services-list {
+            display: flex;
+            flex-wrap: wrap;
             gap: 8px;
+            margin-top: 16px;
         }
 
-        .booking-side-card--accent {
-            background: #faf5ff;
-            border: 1px solid #efe3ff;
+        .service-tag {
+            padding: 4px 12px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #2c3e50;
         }
 
-        .form-errors-box {
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
-            color: #9f1239;
-            padding: 14px 16px;
-            border-radius: 14px;
-            margin-bottom: 18px;
+        .hint-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .hint-card .info-card-title,
+        .hint-card .info-card-desc {
+            color: rgba(255,255,255,0.95);
+        }
+
+        .alert-message {
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: #c0392b;
+            font-size: 14px;
         }
 
         #id_service,
@@ -409,68 +657,363 @@
         #id_email,
         #id_comment {
             width: 100%;
+            min-height: 52px;
+            padding: 12px 14px;
+            border: 2px solid #ecf0f1;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: white;
+            color: #2c3e50;
+            font-weight: 500;
+            box-shadow: none;
+        }
+
+        label {
+            margin-bottom: 0;
+        }
+
+        #id_comment {
+            min-height: 132px;
+            resize: vertical;
+        }
+
+        #id_service:hover,
+        #id_master:hover,
+        #id_first_name:hover,
+        #id_last_name:hover,
+        #id_phone:hover,
+        #id_email:hover,
+        #id_comment:hover {
+            border-color: #e67e22;
+        }
+
+        #id_service:focus,
+        #id_master:focus,
+        #id_first_name:focus,
+        #id_last_name:focus,
+        #id_phone:focus,
+        #id_email:focus,
+        #id_comment:focus {
+            outline: none;
+            border-color: #e67e22;
+            box-shadow: 0 0 0 3px rgba(230,126,34,0.1);
         }
 
         #id_booking_date {
             width: 100%;
             min-height: 52px;
             padding: 12px 14px;
-            border: 1px solid #d7c0ff;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
-            color: #3f2470;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.06);
+            border: 2px solid #ecf0f1;
+            border-radius: 12px;
+            background: white;
+            color: #2c3e50;
+            font-weight: 500;
+            box-shadow: none;
         }
 
         #id_booking_date:hover {
-            border-color: #b794f4;
-            background: linear-gradient(135deg, #ffffff 0%, #f7f0ff 100%);
+            border-color: #e67e22;
         }
 
         #id_booking_date:focus {
             outline: none;
-            border-color: #7c3aed;
-            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+            border-color: #e67e22;
+            box-shadow: 0 0 0 3px rgba(230,126,34,0.1);
         }
 
-        .form-row--date {
-            position: relative;
+        .flatpickr-calendar {
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        }
+
+        .flatpickr-day.day-available {
+            background: rgba(34, 197, 94, 0.16);
+            border-color: rgba(34, 197, 94, 0.24);
+            color: #166534;
+            font-weight: 700;
+        }
+
+        .flatpickr-day.day-available:hover {
+            background: rgba(34, 197, 94, 0.26);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .flatpickr-day.day-full,
+        .flatpickr-day.day-full:hover {
+            background: rgba(239, 68, 68, 0.14);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #b91c1c;
+        }
+
+        .flatpickr-day.flatpickr-disabled.day-full,
+        .flatpickr-day.flatpickr-disabled.day-full:hover {
+            color: #b91c1c;
+            background: rgba(239, 68, 68, 0.14);
+            border-color: rgba(239, 68, 68, 0.2);
+            cursor: not-allowed;
+        }
+
+        .flatpickr-day.selected.day-available,
+        .flatpickr-day.selected.day-available:hover {
+            background: #e67e22;
+            border-color: #e67e22;
+            color: #fffdfa;
         }
 
         @media (max-width: 980px) {
+            body.booking-page-bg {
+                background-attachment: scroll;
+            }
+
+            .booking-grid,
             .booking-layout {
                 grid-template-columns: 1fr;
             }
 
-            .booking-page__intro h1 {
-                font-size: 30px;
+            .booking-sidebar {
+                position: static;
             }
 
             .slot-grid {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
             }
         }
+
+        @media (max-width: 560px) {
+            .booking-page {
+                gap: 18px;
+            }
+
+            .booking-header h1 {
+                font-size: 32px;
+            }
+
+            .booking-card,
+            .booking-form-wrapper {
+                padding: 18px;
+            }
+
+            .step-text {
+                display: none;
+            }
+
+            .step {
+                justify-content: center;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-fields-grid.two-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .slot-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            const bookingForm = document.getElementById("booking-form");
             const serviceSelect = document.getElementById("id_service");
             const masterSelect = document.getElementById("id_master");
             const dateInput = document.getElementById("id_booking_date");
+            const dateHelp = document.getElementById("dateHelp");
             const slotSelect = document.getElementById("id_slot");
-            const slotHelp = document.getElementById("slot-help");
-            const summaryBox = document.getElementById("booking-summary");
-            const slotSections = document.getElementById("slot-sections");
+            const slotHelp = document.getElementById("slotHint");
+            const summaryCard = document.getElementById("summaryCard");
+            const summaryContent = document.getElementById("summaryContent");
+            const slotSections = document.getElementById("slotSections");
+            const timeSlotsWrapper = document.getElementById("timeSlotsWrapper");
+            const serviceMetaDataElement = document.getElementById("service-meta-data");
+            const stepIndicators = Array.from(document.querySelectorAll(".step"));
+            const stepOneSection = document.getElementById("step1");
+            const stepTwoSection = document.getElementById("step2");
+            const prevBtn = document.getElementById("prevBtn");
+            const nextBtn = document.getElementById("nextBtn");
+            const submitBtn = document.getElementById("submitBtn");
+            const serviceMetaMap = {};
+            const monthAvailability = {};
+            const isMasterLocked = Boolean(bookingForm && bookingForm.querySelector(".booking-master-hidden"));
+            const todayIso = new Date().toISOString().slice(0, 10);
+            let bookingCalendar = null;
+            let currentStep = 1;
+
+            if (bookingForm) {
+                bookingForm.querySelectorAll("input, select, textarea").forEach((field) => {
+                    if (field.type === "hidden") {
+                        return;
+                    }
+
+                    if (field.tagName === "SELECT") {
+                        field.classList.add("form-select", "bootstrap-enhanced");
+                    } else {
+                        field.classList.add("form-control", "bootstrap-enhanced");
+                    }
+                });
+            }
 
             const initialMasterValue = masterSelect.value;
+            const initialServiceValue = serviceSelect.value;
             const initialSlotValue = slotSelect.value;
+
+            if (serviceMetaDataElement) {
+                JSON.parse(serviceMetaDataElement.textContent).forEach((item) => {
+                    serviceMetaMap[String(item.id)] = item;
+                });
+            }
 
             function getSelectedText(selectElement) {
                 if (!selectElement || !selectElement.selectedOptions.length) {
                     return "";
                 }
                 return selectElement.selectedOptions[0].textContent.trim();
+            }
+
+            function getMonthKey(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                return `${year}-${month}`;
+            }
+
+            function formatDateKey(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const day = String(date.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+            }
+
+            function hasAvailabilityContext() {
+                return Boolean(masterSelect.value && serviceSelect.value);
+            }
+
+            function isCalendarDateDisabled(date) {
+                const dateKey = formatDateKey(date);
+
+                if (dateKey < todayIso) {
+                    return true;
+                }
+
+                if (!hasAvailabilityContext()) {
+                    return false;
+                }
+
+                const monthKey = getMonthKey(date);
+                const status = monthAvailability[monthKey]?.[dateKey];
+
+                return status === "full";
+            }
+
+            function updateDateHelpText(message) {
+                if (dateHelp) {
+                    dateHelp.textContent = message;
+                }
+            }
+
+            function refreshCalendarDisabledState() {
+                if (!bookingCalendar) {
+                    return;
+                }
+
+                bookingCalendar.set("disable", [isCalendarDateDisabled]);
+                bookingCalendar.redraw();
+            }
+
+            function clearDateIfUnavailable() {
+                if (!bookingCalendar || !dateInput.value || !hasAvailabilityContext()) {
+                    return;
+                }
+
+                const selectedDate = new Date(`${dateInput.value}T00:00:00`);
+                const monthKey = getMonthKey(selectedDate);
+                const status = monthAvailability[monthKey]?.[dateInput.value];
+
+                if (status === "full") {
+                    bookingCalendar.clear();
+                    resetSlots();
+                    updateDateHelpText("Этот день уже полностью занят. Выберите зелёную дату.");
+                }
+            }
+
+            async function loadMonthAvailability(targetDate = null) {
+                if (!bookingCalendar || !hasAvailabilityContext()) {
+                    refreshCalendarDisabledState();
+                    return;
+                }
+
+                const sourceDate = targetDate || new Date(bookingCalendar.currentYear, bookingCalendar.currentMonth, 1);
+                const monthKey = getMonthKey(sourceDate);
+
+                if (monthAvailability[monthKey]) {
+                    refreshCalendarDisabledState();
+                    return;
+                }
+
+                updateDateHelpText("Загружаем доступные дни в календаре...");
+
+                const response = await fetch(
+                    `/booking/api/calendar-days/?service=${serviceSelect.value}&master=${masterSelect.value}&month=${monthKey}`
+                );
+                const data = await response.json();
+                monthAvailability[monthKey] = data.days || {};
+
+                refreshCalendarDisabledState();
+                clearDateIfUnavailable();
+                updateDateHelpText("Зелёные дни свободны для записи, красные полностью заняты.");
+            }
+
+            function resetMonthAvailability() {
+                Object.keys(monthAvailability).forEach((key) => {
+                    delete monthAvailability[key];
+                });
+                refreshCalendarDisabledState();
+            }
+
+            function initializeCalendar() {
+                if (!dateInput || typeof flatpickr === "undefined") {
+                    return;
+                }
+
+                bookingCalendar = flatpickr(dateInput, {
+                    dateFormat: "Y-m-d",
+                    defaultDate: dateInput.value || null,
+                    minDate: "today",
+                    locale: "ru",
+                    disableMobile: true,
+                    disable: [isCalendarDateDisabled],
+                    onDayCreate: function (_dObj, _dStr, _fp, dayElem) {
+                        const dateKey = formatDateKey(dayElem.dateObj);
+                        const monthKey = getMonthKey(dayElem.dateObj);
+                        const status = monthAvailability[monthKey]?.[dateKey];
+
+                        dayElem.classList.remove("day-available", "day-full");
+
+                        if (status === "available") {
+                            dayElem.classList.add("day-available");
+                            dayElem.title = "Есть свободное время";
+                        } else if (status === "full") {
+                            dayElem.classList.add("day-full");
+                            dayElem.title = "Свободного времени нет";
+                        }
+                    },
+                    onMonthChange: function (_selectedDates, _dateStr, instance) {
+                        loadMonthAvailability(new Date(instance.currentYear, instance.currentMonth, 1));
+                    },
+                    onYearChange: function (_selectedDates, _dateStr, instance) {
+                        loadMonthAvailability(new Date(instance.currentYear, instance.currentMonth, 1));
+                    },
+                    onOpen: function (_selectedDates, _dateStr, instance) {
+                        loadMonthAvailability(new Date(instance.currentYear, instance.currentMonth, 1));
+                    },
+                    onChange: async function () {
+                        await loadSlots();
+                        renderSummary();
+                    },
+                });
             }
 
             function renderSummary() {
@@ -484,51 +1027,131 @@
                 const hasRealDate = dateValue;
                 const hasRealSlot = slotSelect.value;
 
-                if (!hasRealService && !hasRealMaster && !hasRealDate && !hasRealSlot) {
-                    summaryBox.innerHTML = `
-                        <div class="booking-summary__empty">
-                            Когда вы выберете параметры записи, здесь появится краткая сводка.
-                        </div>
-                    `;
+                if (!summaryCard || !summaryContent) {
                     return;
                 }
 
-                summaryBox.innerHTML = `
-                    <div class="booking-summary__grid">
-                        <div class="booking-summary__row">
-                            <span class="booking-summary__label">Услуга</span>
-                            <span class="booking-summary__value">${hasRealService ? serviceText : "—"}</span>
-                        </div>
-                        <div class="booking-summary__row">
-                            <span class="booking-summary__label">Мастер</span>
-                            <span class="booking-summary__value">${hasRealMaster ? masterText : "—"}</span>
-                        </div>
-                        <div class="booking-summary__row">
-                            <span class="booking-summary__label">Дата</span>
-                            <span class="booking-summary__value">${hasRealDate ? dateValue : "—"}</span>
-                        </div>
-                        <div class="booking-summary__row">
-                            <span class="booking-summary__label">Время</span>
-                            <span class="booking-summary__value">${hasRealSlot ? slotText : "—"}</span>
-                        </div>
+                if (!hasRealService && !hasRealMaster && !hasRealDate && !hasRealSlot) {
+                    summaryCard.style.display = "none";
+                    return;
+                }
+
+                summaryCard.style.display = "block";
+                const meta = serviceMetaMap[String(serviceSelect.value)];
+                let html = "";
+
+                if (hasRealMaster) {
+                    html += `<div class="summary-item"><span class="summary-label">Мастер</span><span class="summary-value">${masterText}</span></div>`;
+                }
+                if (hasRealService) {
+                    html += `<div class="summary-item"><span class="summary-label">Услуга</span><span class="summary-value">${serviceText}</span></div>`;
+                }
+                if (meta) {
+                    html += `<div class="summary-item"><span class="summary-label">Длительность</span><span class="summary-value">${formatMinutes(Number(meta.duration_minutes || 0))}</span></div>`;
+                    html += `<div class="summary-item"><span class="summary-label">Стоимость</span><span class="summary-value">${meta.price} BYN</span></div>`;
+                }
+                if (hasRealDate) {
+                    html += `<div class="summary-item"><span class="summary-label">Дата</span><span class="summary-value">${dateValue}</span></div>`;
+                }
+                if (hasRealSlot) {
+                    html += `<div class="summary-item"><span class="summary-label">Время</span><span class="summary-value">${slotText}</span></div>`;
+                }
+
+                summaryContent.innerHTML = html;
+            }
+
+            function formatMinutes(value) {
+                if (!value) {
+                    return "—";
+                }
+
+                const hours = Math.floor(value / 60);
+                const minutes = value % 60;
+
+                if (hours && minutes) {
+                    return `${hours} ч ${minutes} мин`;
+                }
+
+                if (hours) {
+                    return `${hours} ч`;
+                }
+
+                return `${minutes} мин`;
+            }
+
+            function canOpenContactsStep() {
+                return Boolean(masterSelect.value && serviceSelect.value && dateInput.value && slotSelect.value);
+            }
+
+            function syncStepUi() {
+                if (stepOneSection) {
+                    stepOneSection.classList.toggle("active", currentStep === 1);
+                }
+                if (stepTwoSection) {
+                    stepTwoSection.classList.toggle("active", currentStep === 2);
+                }
+
+                stepIndicators.forEach((step) => {
+                    const stepNumber = Number(step.dataset.step);
+                    step.classList.toggle("active", stepNumber === currentStep);
+                    step.classList.toggle("completed", stepNumber < currentStep || (stepNumber === 1 && canOpenContactsStep() && currentStep === 2));
+                });
+
+                if (prevBtn) {
+                    prevBtn.style.display = currentStep === 2 ? "inline-flex" : "none";
+                }
+                if (nextBtn) {
+                    nextBtn.style.display = currentStep === 1 ? "inline-flex" : "none";
+                }
+                if (submitBtn) {
+                    submitBtn.style.display = currentStep === 2 ? "inline-flex" : "none";
+                }
+            }
+
+            function goToStep(stepNumber) {
+                if (stepNumber === 2 && !canOpenContactsStep()) {
+                    window.alert("Сначала выберите мастера, услугу, дату и время.");
+                    currentStep = 1;
+                    syncStepUi();
+                    return;
+                }
+
+                currentStep = stepNumber;
+                syncStepUi();
+            }
+
+            function updateBlockStates() {
+                const hasSlot = Boolean(slotSelect.value);
+
+                if (stepIndicators[1] && currentStep === 1) {
+                    stepIndicators[1].classList.toggle("completed", hasSlot);
+                }
+            }
+
+            function renderEmptySlotSections(message) {
+                if (timeSlotsWrapper) {
+                    timeSlotsWrapper.style.display = "block";
+                }
+                slotSections.innerHTML = `
+                    <div class="slot-group">
+                        <div class="slot-group-title">Свободные слоты</div>
+                        <div class="slot-grid__empty">${message}</div>
                     </div>
                 `;
             }
 
-            function renderEmptySlotSections(message) {
-                slotSections.innerHTML = `<div class="slot-grid__empty">${message}</div>`;
-            }
-
-            function resetMasters(placeholder = "Сначала выберите услугу") {
-                masterSelect.innerHTML = "";
+            function resetServices(placeholder = "Сначала выберите мастера") {
+                serviceSelect.innerHTML = "";
                 const option = document.createElement("option");
                 option.value = "";
                 option.textContent = placeholder;
-                masterSelect.appendChild(option);
+                serviceSelect.appendChild(option);
+                resetMonthAvailability();
                 renderSummary();
+                updateBlockStates();
             }
 
-            function resetSlots(placeholder = "Сначала выберите услугу, мастера и дату") {
+            function resetSlots(placeholder = "Сначала выберите мастера, услугу и дату") {
                 slotSelect.innerHTML = "";
                 const option = document.createElement("option");
                 option.value = "";
@@ -536,6 +1159,7 @@
                 slotSelect.appendChild(option);
                 renderEmptySlotSections("Здесь появятся доступные слоты времени.");
                 renderSummary();
+                updateBlockStates();
             }
 
             function setSlotValue(value, label) {
@@ -557,6 +1181,7 @@
                 });
 
                 renderSummary();
+                updateBlockStates();
             }
 
             function getSlotPeriod(label) {
@@ -636,35 +1261,47 @@
                 });
             }
 
-            async function loadMasters(selectedMasterId = "") {
-                const serviceId = serviceSelect.value;
+            async function loadServices(selectedServiceId = "") {
+                const masterId = masterSelect.value;
 
-                resetMasters();
+                resetServices();
                 resetSlots();
 
-                if (!serviceId) {
-                    slotHelp.textContent = "Сначала выберите услугу.";
+                if (!masterId) {
+                    slotHelp.textContent = "Сначала выберите мастера.";
+                    updateDateHelpText("Сначала выберите мастера, затем услугу.");
                     return;
                 }
 
                 const response = await fetch(
-                    `/booking/api/masters/?service=${serviceId}&selected_master=${selectedMasterId}`
+                    `/booking/api/services/?master=${masterId}&selected_service=${selectedServiceId}`
                 );
                 const data = await response.json();
 
-                resetMasters("Выберите мастера");
+                resetServices("Выберите услугу");
 
-                data.masters.forEach((master) => {
+                data.services.forEach((service) => {
+                    serviceMetaMap[String(service.id)] = {
+                        id: service.id,
+                        price: service.price,
+                        duration_minutes: service.duration_minutes,
+                        total_duration_minutes: service.total_duration_minutes,
+                        prepayment_required: service.prepayment_required,
+                    };
                     const option = document.createElement("option");
-                    option.value = master.id;
-                    option.textContent = master.name;
-                    if (master.selected) {
+                    option.value = service.id;
+                    option.textContent = service.name;
+                    if (service.selected) {
                         option.selected = true;
                     }
-                    masterSelect.appendChild(option);
+                    serviceSelect.appendChild(option);
                 });
 
                 renderSummary();
+                resetMonthAvailability();
+                if (hasAvailabilityContext()) {
+                    await loadMonthAvailability();
+                }
             }
 
             async function loadSlots(selectedSlotValue = "") {
@@ -678,11 +1315,17 @@
                 loadingOption.textContent = "Загрузка...";
                 slotSelect.appendChild(loadingOption);
 
+                if (timeSlotsWrapper) {
+                    timeSlotsWrapper.style.display = "block";
+                }
                 renderEmptySlotSections("Загружаем свободное время...");
 
                 if (!serviceId || !masterId || !bookingDate) {
+                    if (timeSlotsWrapper) {
+                        timeSlotsWrapper.style.display = "none";
+                    }
                     resetSlots();
-                    slotHelp.textContent = "Выберите услугу, мастера и дату — после этого появятся свободные слоты.";
+                    slotHelp.textContent = "Выберите мастера, услугу и дату — после этого появятся свободные слоты.";
                     return;
                 }
 
@@ -701,7 +1344,7 @@
                     slotSelect.appendChild(option);
 
                     renderEmptySlotSections("На выбранную дату свободных слотов нет.");
-                    slotHelp.textContent = "На выбранную дату свободных слотов нет. Попробуйте другой день или другого мастера.";
+                    slotHelp.textContent = "На выбранную дату свободных слотов нет. Попробуйте другой день, другую услугу или другого мастера.";
                     renderSummary();
                     return;
                 }
@@ -723,24 +1366,40 @@
                 });
 
                 renderSlotSections(data.slots, selectedSlotValue);
+                if (timeSlotsWrapper) {
+                    timeSlotsWrapper.style.display = "block";
+                }
                 slotHelp.textContent = "Выберите подходящее время из доступных слотов.";
                 renderSummary();
+                updateBlockStates();
             }
 
-            serviceSelect.addEventListener("change", async function () {
-                await loadMasters();
-                await loadSlots();
-                renderSummary();
-            });
-
             masterSelect.addEventListener("change", async function () {
+                if (currentStep === 2) {
+                    currentStep = 1;
+                }
+                await loadServices();
+                if (!serviceSelect.value) {
+                    updateDateHelpText("После выбора услуги календарь покажет зелёные и красные дни.");
+                }
                 await loadSlots();
                 renderSummary();
+                updateBlockStates();
             });
 
-            dateInput.addEventListener("change", async function () {
+            serviceSelect.addEventListener("change", async function () {
+                if (currentStep === 2) {
+                    currentStep = 1;
+                }
+                resetMonthAvailability();
+                if (serviceSelect.value) {
+                    await loadMonthAvailability();
+                } else {
+                    updateDateHelpText("После выбора мастера и услуги календарь покажет зелёные и красные дни.");
+                }
                 await loadSlots();
                 renderSummary();
+                updateBlockStates();
             });
 
             slotSelect.addEventListener("change", function () {
@@ -749,23 +1408,267 @@
                     button.classList.toggle("is-selected", button.dataset.value === selectedValue);
                 });
                 renderSummary();
+                syncStepUi();
             });
 
-            async function initializeFormFromUrl() {
-                if (serviceSelect.value) {
-                    await loadMasters(initialMasterValue);
+            if (nextBtn) {
+                nextBtn.addEventListener("click", function () {
+                    goToStep(2);
+                });
+            }
 
-                    if (masterSelect.value && dateInput.value) {
+            if (prevBtn) {
+                prevBtn.addEventListener("click", function () {
+                    goToStep(1);
+                });
+            }
+
+            async function initializeFormFromUrl() {
+                initializeCalendar();
+
+                if (isMasterLocked) {
+                    if (masterSelect.value && dateInput.value && serviceSelect.value) {
+                        await loadMonthAvailability();
+                        await loadSlots(initialSlotValue);
+                    }
+                } else if (masterSelect.value) {
+                    await loadServices(initialServiceValue);
+
+                    if (serviceSelect.value && dateInput.value) {
+                        await loadMonthAvailability();
                         await loadSlots(initialSlotValue);
                     }
                 } else {
                     renderEmptySlotSections("Здесь появятся доступные слоты времени.");
+                    resetServices("Сначала выберите мастера");
+                    updateDateHelpText("Сначала выберите мастера, затем услугу.");
+                    if (timeSlotsWrapper) {
+                        timeSlotsWrapper.style.display = "none";
+                    }
                 }
 
                 renderSummary();
+                updateBlockStates();
+                syncStepUi();
             }
 
             initializeFormFromUrl();
         });
     </script>
+{% endblock %}
+
+{% block extra_style %}
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --primary-dark: #1a252f;
+            --secondary: #e67e22;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #ecf0f1;
+            --bg-card: #ffffff;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --shadow: 0 4px 6px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-hover: 0 10px 25px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+
+        body.booking-page-bg {
+            background:
+                linear-gradient(0deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.72)),
+                url("/media/booking/booking-silhouette.png"),
+                linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-size: cover, cover, cover;
+            background-position: center center, right center, center center;
+            background-repeat: no-repeat, no-repeat, no-repeat;
+            background-attachment: fixed, fixed, fixed;
+        }
+
+        body.booking-page-bg .page-container {
+            background: transparent;
+        }
+
+        body.booking-page-bg .booking-form-wrapper,
+        body.booking-page-bg .info-card {
+            background: var(--bg-card);
+            box-shadow: var(--shadow);
+            border: 0;
+        }
+
+        body.booking-page-bg .booking-form-wrapper:hover,
+        body.booking-page-bg .info-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        body.booking-page-bg .booking-header h1,
+        body.booking-page-bg .step.active .step-text,
+        body.booking-page-bg .step.completed .step-text,
+        body.booking-page-bg .time-slots-title,
+        body.booking-page-bg .info-card-value,
+        body.booking-page-bg .summary-value,
+        body.booking-page-bg .field-group label,
+        body.booking-page-bg .slot-group-title {
+            color: var(--primary);
+        }
+
+        body.booking-page-bg .booking-header p,
+        body.booking-page-bg .step-text,
+        body.booking-page-bg .field-hint,
+        body.booking-page-bg .time-slots-hint,
+        body.booking-page-bg .info-card-title,
+        body.booking-page-bg .info-card-desc,
+        body.booking-page-bg .summary-label,
+        body.booking-page-bg .slot-grid__empty {
+            color: var(--text-light);
+        }
+
+        body.booking-page-bg .booking-badge {
+            color: var(--secondary);
+            background: rgba(255,255,255,0.95);
+            box-shadow: var(--shadow);
+        }
+
+        body.booking-page-bg .step-number {
+            background: var(--border);
+            color: var(--text-light);
+        }
+
+        body.booking-page-bg .step.active .step-number {
+            background: var(--secondary);
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(230,126,34,0.2);
+        }
+
+        body.booking-page-bg .step.completed .step-number {
+            background: var(--success);
+            color: #fff;
+        }
+
+        body.booking-page-bg .step-line,
+        body.booking-page-bg .progress-steps,
+        body.booking-page-bg .form-actions,
+        body.booking-page-bg .time-slots-wrapper,
+        body.booking-page-bg .summary-item {
+            border-color: var(--border);
+        }
+
+        body.booking-page-bg .field-group select,
+        body.booking-page-bg .field-group input,
+        body.booking-page-bg .field-group textarea,
+        body.booking-page-bg .bootstrap-enhanced.form-control,
+        body.booking-page-bg .bootstrap-enhanced.form-select {
+            background: #fff;
+            border: 2px solid var(--border);
+            color: var(--text);
+            box-shadow: none;
+            border-radius: var(--radius);
+        }
+
+        body.booking-page-bg .field-group select:focus,
+        body.booking-page-bg .field-group input:focus,
+        body.booking-page-bg .field-group textarea:focus,
+        body.booking-page-bg .bootstrap-enhanced.form-control:focus,
+        body.booking-page-bg .bootstrap-enhanced.form-select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(230,126,34,0.1);
+        }
+
+        body.booking-page-bg .btn-primary {
+            background: var(--secondary);
+            color: #fff;
+        }
+
+        body.booking-page-bg .btn-primary:hover {
+            background: #d35400;
+            box-shadow: 0 4px 12px rgba(230,126,34,0.3);
+        }
+
+        body.booking-page-bg .btn-secondary {
+            background: #fff;
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        body.booking-page-bg .btn-secondary:hover {
+            border-color: var(--secondary);
+        }
+
+        body.booking-page-bg .slot-group {
+            background: #f8f9fa;
+        }
+
+        body.booking-page-bg .slot-button {
+            background: #fff;
+            border: 2px solid var(--border);
+            color: var(--text);
+            box-shadow: none;
+        }
+
+        body.booking-page-bg .slot-button:hover {
+            border-color: var(--secondary);
+        }
+
+        body.booking-page-bg .slot-button.is-selected {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        body.booking-page-bg .service-tag {
+            background: #f8f9fa;
+            color: var(--text);
+        }
+
+        body.booking-page-bg .hint-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        body.booking-page-bg .hint-card .info-card-title,
+        body.booking-page-bg .hint-card .info-card-desc {
+            color: rgba(255,255,255,0.95);
+        }
+
+        body.booking-page-bg .alert-message {
+            background: #fee;
+            border-left: 4px solid var(--danger);
+            border-radius: var(--radius);
+            color: #c0392b;
+        }
+
+        body.booking-page-bg .flatpickr-calendar {
+            border-radius: var(--radius) !important;
+            box-shadow: var(--shadow-hover) !important;
+        }
+
+        body.booking-page-bg .flatpickr-day.day-available {
+            background: rgba(39,174,96,0.1);
+            color: var(--success);
+            border-color: transparent;
+        }
+
+        body.booking-page-bg .flatpickr-day.day-available:hover {
+            background: rgba(39,174,96,0.2);
+        }
+
+        body.booking-page-bg .flatpickr-day.day-full,
+        body.booking-page-bg .flatpickr-day.day-full:hover,
+        body.booking-page-bg .flatpickr-day.flatpickr-disabled.day-full,
+        body.booking-page-bg .flatpickr-day.flatpickr-disabled.day-full:hover {
+            background: rgba(231,76,60,0.1);
+            color: var(--danger);
+            border-color: transparent;
+        }
+
+        body.booking-page-bg .flatpickr-day.selected,
+        body.booking-page-bg .flatpickr-day.selected:hover,
+        body.booking-page-bg .flatpickr-day.selected.day-available,
+        body.booking-page-bg .flatpickr-day.selected.day-available:hover {
+            background: var(--secondary) !important;
+            border-color: var(--secondary) !important;
+            color: #fffdfa;
+        }
+    </style>
 {% endblock %}

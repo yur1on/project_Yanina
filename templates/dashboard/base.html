@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+{% block body_class %}admin-dashboard{% endblock %}
+
+{% block content %}
+    <section class="admin-workspace" id="admin-workspace">
+        <aside class="admin-sidebar" id="admin-sidebar">
+            <button type="button" class="admin-sidebar__toggle" id="admin-sidebar-toggle" aria-expanded="true">
+                Скрыть меню
+            </button>
+
+            <div class="admin-sidebar__brand">
+                <div class="admin-sidebar__eyebrow">Администратор</div>
+                <h1>Панель студии</h1>
+            </div>
+
+            <nav class="admin-sidebar__nav">
+                <a href="{% url 'core:dashboard_appointments' %}" class="admin-sidebar__link {% if request.resolver_match.url_name == 'dashboard_appointments' or request.resolver_match.url_name == 'dashboard_appointment_edit' or request.resolver_match.url_name == 'dashboard_appointment_delete' or request.resolver_match.url_name == 'dashboard_appointment_quick_move' %}is-active{% endif %}">
+                    <span>Записи</span>
+                </a>
+
+                <a href="{% url 'core:dashboard_calendar' %}" class="admin-sidebar__link {% if request.resolver_match.url_name == 'dashboard_calendar' %}is-active{% endif %}">
+                    <span>Календарь</span>
+                </a>
+
+                <a href="{% url 'core:dashboard_appointment_create' %}" class="admin-sidebar__link {% if request.resolver_match.url_name == 'dashboard_appointment_create' %}is-active{% endif %}">
+                    <span>Новая запись</span>
+                </a>
+
+                <a href="{% url 'core:dashboard_timeoff_create' %}" class="admin-sidebar__link {% if request.resolver_match.url_name == 'dashboard_timeoff_create' or request.resolver_match.url_name == 'dashboard_timeoff_edit' %}is-active{% endif %}">
+                    <span>Блокировка</span>
+                </a>
+
+                <a href="{% url 'core:dashboard_client_create' %}" class="admin-sidebar__link {% if request.resolver_match.url_name == 'dashboard_client_create' or request.resolver_match.url_name == 'dashboard_client_edit' or request.resolver_match.url_name == 'dashboard_client_detail' %}is-active{% endif %}">
+                    <span>Клиенты</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar__footer">
+                <a href="{% url 'admin:index' %}" class="admin-sidebar__utility">
+                    <span>Django admin</span>
+                </a>
+
+                <a href="{% url 'core:home' %}" class="admin-sidebar__utility">
+                    <span>На сайт</span>
+                </a>
+            </div>
+        </aside>
+
+        <button type="button" class="admin-sidebar-tail" id="admin-sidebar-tail" aria-expanded="false">
+            Меню
+        </button>
+
+        <div class="admin-main-area">
+            <div class="admin-page-content">
+                {% block admin_header %}
+                    <header class="admin-page-head">
+                        <div>
+                            <div class="admin-page-head__eyebrow">Раздел</div>
+                            <h2>{% block admin_title %}{% endblock %}</h2>
+                            {% block admin_description %}{% endblock %}
+                        </div>
+
+                        <div class="admin-page-head__actions">
+                            {% block admin_head_actions %}{% endblock %}
+                        </div>
+                    </header>
+                {% endblock %}
+
+                {% block admin_body %}{% endblock %}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_style %}
+    {{ block.super }}
+
+    <style>
+        .admin-workspace,
+        .admin-workspace * {
+            box-sizing: border-box;
+        }
+
+        .admin-workspace {
+            display: grid;
+            grid-template-columns: 210px minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+            width: 100%;
+        }
+
+        body.admin-dashboard {
+            background:
+                radial-gradient(circle at top left, rgba(165, 201, 255, 0.44), transparent 24%),
+                radial-gradient(circle at top right, rgba(195, 221, 255, 0.36), transparent 28%),
+                radial-gradient(circle at bottom left, rgba(214, 230, 255, 0.28), transparent 34%),
+                linear-gradient(180deg, #dce8f5 0%, #d4e0ee 48%, #ccd8e7 100%);
+        }
+
+        body.admin-dashboard .page-container {
+            max-width: none;
+            width: 100%;
+            padding: 20px 24px 44px;
+        }
+
+        .admin-sidebar {
+            position: sticky;
+            top: 92px;
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 16px;
+            width: 100%;
+            min-height: calc(100vh - 120px);
+            padding: 0;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+        }
+
+        .admin-sidebar__toggle {
+            position: static;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 46px;
+            margin: 0;
+            padding: 11px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(168, 177, 196, 0.22);
+            background: linear-gradient(135deg, #64748b, #475569);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.25;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+            transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+        }
+
+        .admin-sidebar__toggle:hover {
+            transform: translateY(-1px) scale(1.03);
+            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.22);
+            filter: brightness(1.03);
+        }
+
+        .admin-sidebar-tail {
+            position: sticky;
+            top: 112px;
+            align-self: start;
+            display: none;
+            min-height: 120px;
+            padding: 14px 10px;
+            border: 1px solid rgba(76, 56, 42, 0.18);
+            border-left: 0;
+            border-radius: 0 18px 18px 0;
+            background: rgba(255, 255, 255, 0.994);
+            color: #6d5d53;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            cursor: pointer;
+            box-shadow: 0 10px 22px rgba(38, 24, 15, 0.05);
+        }
+
+        .admin-sidebar__brand {
+            display: grid;
+            gap: 2px;
+            width: 100%;
+            padding: 2px 2px 4px;
+            text-align: center;
+        }
+
+        .admin-sidebar__brand h1 {
+            margin: 0;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .admin-sidebar__eyebrow,
+        .admin-page-head__eyebrow {
+            color: #73645b;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .admin-sidebar__nav {
+            display: grid;
+            align-content: center;
+            gap: 8px;
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+        }
+
+        .admin-sidebar__footer {
+            display: grid;
+            gap: 8px;
+            width: 100%;
+            margin: 0;
+            padding-top: 8px;
+        }
+
+        .admin-sidebar__link,
+        .admin-sidebar__utility {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 46px;
+            margin: 0;
+            padding: 11px 12px;
+            border-radius: 16px;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.25;
+            text-align: center;
+            text-decoration: none;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+            transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+        }
+
+        .admin-sidebar__link span,
+        .admin-sidebar__utility span {
+            display: block;
+            width: 100%;
+            font-size: inherit;
+            font-weight: inherit;
+            line-height: inherit;
+            text-align: center;
+        }
+
+        .admin-sidebar__link:hover,
+        .admin-sidebar__utility:hover {
+            transform: translateY(-1px) scale(1.03);
+            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.22);
+            filter: brightness(1.03);
+        }
+
+        .admin-sidebar__link.is-active {
+            transform: scale(1.03);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.24);
+        }
+
+        .admin-sidebar__link:nth-child(1) {
+            background: linear-gradient(135deg, #64748b, #475569);
+        }
+
+        .admin-sidebar__link:nth-child(2) {
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+        }
+
+        .admin-sidebar__link:nth-child(3) {
+            background: linear-gradient(135deg, #10b981, #0f766e);
+        }
+
+        .admin-sidebar__link:nth-child(4) {
+            background: linear-gradient(135deg, #14b8a6, #0f766e);
+        }
+
+        .admin-sidebar__link:nth-child(5) {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+        }
+
+        .admin-sidebar__link:nth-child(6) {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+        }
+
+        .admin-sidebar__utility:first-child {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        }
+
+        .admin-sidebar__utility:last-child {
+            background: linear-gradient(135deg, #c084fc, #a855f7);
+        }
+
+        .admin-main-area {
+            min-width: 0;
+            display: grid;
+            gap: 20px;
+        }
+
+        .admin-workspace.is-sidebar-collapsed {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0;
+        }
+
+        .admin-workspace.is-sidebar-collapsed .admin-sidebar {
+            display: none;
+        }
+
+        .admin-workspace.is-sidebar-collapsed .admin-sidebar-tail {
+            display: inline-flex;
+            justify-self: start;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-page-content {
+            display: grid;
+            gap: 20px;
+        }
+
+        .admin-page-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: flex-end;
+            padding: 24px 26px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.994);
+            border: 1px solid rgba(76, 56, 42, 0.18);
+            box-shadow: 0 16px 34px rgba(38, 24, 15, 0.06);
+        }
+
+        .admin-page-head h2 {
+            margin: 0;
+            font-size: clamp(30px, 4vw, 42px);
+            line-height: 1;
+        }
+
+        .admin-page-head p {
+            margin: 8px 0 0;
+            max-width: 760px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .admin-page-head__actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .admin-card {
+            padding: 22px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.994);
+            border: 1px solid rgba(76, 56, 42, 0.18);
+            box-shadow: 0 14px 30px rgba(38, 24, 15, 0.05);
+        }
+
+        @media (max-width: 1100px) {
+            .admin-workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-sidebar {
+                position: static;
+                min-height: auto;
+            }
+
+            .admin-sidebar__nav {
+                align-content: start;
+                min-height: auto;
+            }
+
+            .admin-sidebar-tail {
+                position: fixed;
+                left: 0;
+                top: 140px;
+                z-index: 20;
+            }
+        }
+
+        @media (max-width: 820px) {
+            body.admin-dashboard .page-container {
+                padding: 16px 14px 36px;
+            }
+
+            .admin-page-head {
+                padding: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .admin-page-head__actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block extra_script %}
+    {{ block.super }}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const workspace = document.getElementById("admin-workspace");
+            const sidebar = document.getElementById("admin-sidebar");
+            const toggle = document.getElementById("admin-sidebar-toggle");
+            const tail = document.getElementById("admin-sidebar-tail");
+
+            if (!workspace || !sidebar || !toggle || !tail) {
+                return;
+            }
+
+            const storageKey = "dashboard_sidebar_collapsed";
+
+            function applyState(collapsed) {
+                workspace.classList.toggle("is-sidebar-collapsed", collapsed);
+                toggle.textContent = collapsed ? "Показать меню" : "Скрыть меню";
+                tail.style.display = collapsed ? "inline-flex" : "none";
+                toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+                tail.setAttribute("aria-expanded", collapsed ? "false" : "true");
+            }
+
+            const savedState = window.localStorage.getItem(storageKey) === "1";
+            applyState(savedState);
+
+            toggle.addEventListener("click", function () {
+                const collapsed = !workspace.classList.contains("is-sidebar-collapsed");
+                applyState(collapsed);
+                window.localStorage.setItem(storageKey, collapsed ? "1" : "0");
+            });
+
+            tail.addEventListener("click", function () {
+                applyState(false);
+                window.localStorage.setItem(storageKey, "0");
+            });
+        });
+    </script>
+{% endblock %}

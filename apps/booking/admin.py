@@ -1,6 +1,6 @@
 from django.contrib import admin
-from django.utils import timezone
 
+from .services import BookingService
 from .models import Appointment, AppointmentAttachment, AppointmentStatusHistory
 
 
@@ -24,16 +24,9 @@ class AppointmentAttachmentInline(admin.TabularInline):
 def mark_as_confirmed(modeladmin, request, queryset):
     updated_count = 0
     for appointment in queryset:
-        old_status = appointment.status
-        if old_status != Appointment.Status.CONFIRMED:
-            appointment.status = Appointment.Status.CONFIRMED
-            appointment.confirmed_by = request.user
-            appointment.confirmed_at = timezone.now()
-            appointment.save()
-
-            AppointmentStatusHistory.objects.create(
+        if appointment.status != Appointment.Status.CONFIRMED:
+            BookingService.change_status(
                 appointment=appointment,
-                old_status=old_status,
                 new_status=Appointment.Status.CONFIRMED,
                 changed_by=request.user,
                 comment="Статус изменён через действие в админке.",
@@ -47,14 +40,9 @@ def mark_as_confirmed(modeladmin, request, queryset):
 def mark_as_completed(modeladmin, request, queryset):
     updated_count = 0
     for appointment in queryset:
-        old_status = appointment.status
-        if old_status != Appointment.Status.COMPLETED:
-            appointment.status = Appointment.Status.COMPLETED
-            appointment.save()
-
-            AppointmentStatusHistory.objects.create(
+        if appointment.status != Appointment.Status.COMPLETED:
+            BookingService.change_status(
                 appointment=appointment,
-                old_status=old_status,
                 new_status=Appointment.Status.COMPLETED,
                 changed_by=request.user,
                 comment="Статус изменён через действие в админке.",
@@ -68,21 +56,12 @@ def mark_as_completed(modeladmin, request, queryset):
 def mark_as_cancelled(modeladmin, request, queryset):
     updated_count = 0
     for appointment in queryset:
-        old_status = appointment.status
-        if old_status != Appointment.Status.CANCELLED:
-            appointment.status = Appointment.Status.CANCELLED
-            appointment.cancelled_by = request.user
-            appointment.cancelled_at = timezone.now()
-            if not appointment.cancel_reason:
-                appointment.cancel_reason = "Отменено через админку"
-            appointment.save()
-
-            AppointmentStatusHistory.objects.create(
+        if appointment.status != Appointment.Status.CANCELLED:
+            BookingService.change_status(
                 appointment=appointment,
-                old_status=old_status,
                 new_status=Appointment.Status.CANCELLED,
                 changed_by=request.user,
-                comment="Статус изменён через действие в админке.",
+                comment="Отменено через админку",
             )
             updated_count += 1
 

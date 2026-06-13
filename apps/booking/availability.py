@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import calendar
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
@@ -104,6 +105,41 @@ class AvailabilityService:
             cursor += slot_step
 
         return slots
+
+    @staticmethod
+    def get_month_day_statuses(
+        *,
+        master: Master,
+        service: Service,
+        year: int,
+        month: int,
+        slot_step_minutes: int = DEFAULT_SLOT_STEP_MINUTES,
+    ) -> dict[str, str]:
+        """
+        Возвращает статусы дней месяца:
+        - available: есть хотя бы один слот
+        - full: слотов нет
+        """
+
+        _, days_in_month = calendar.monthrange(year, month)
+        today = timezone.localdate()
+        statuses: dict[str, str] = {}
+
+        for day in range(1, days_in_month + 1):
+            target_date = date(year, month, day)
+
+            if target_date < today:
+                continue
+
+            slots = AvailabilityService.get_available_slots(
+                master=master,
+                service=service,
+                target_date=target_date,
+                slot_step_minutes=slot_step_minutes,
+            )
+            statuses[target_date.isoformat()] = "available" if slots else "full"
+
+        return statuses
 
     @staticmethod
     def get_working_hours_for_date(master: Master, target_date: date) -> WorkingHours | None:

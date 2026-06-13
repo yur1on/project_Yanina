@@ -1,15 +1,10 @@
-{% extends "base.html" %}
+{% extends "dashboard/base.html" %}
 
-{% block title %}Удалить запись{% endblock %}
+{% block title %}Отменить запись{% endblock %}
+{% block admin_title %}Отменить запись{% endblock %}
+{% block admin_description %}<p>Отмена сохраняет запись в истории клиента и помогает не терять аналитику по отказам.</p>{% endblock %}
 
-{% block content %}
-    <div class="section-header">
-        <h1>Удалить запись</h1>
-        <div class="actions">
-            <a href="{% url 'core:dashboard_appointments' %}" class="button button-light">Назад к записям</a>
-            <a href="{% url 'core:dashboard_client_detail' appointment.client.id %}" class="button button-outline">Карточка клиента</a>
-        </div>
-    </div>
+{% block admin_body %}
 
     <div class="content-card">
         <p><strong>Клиент:</strong> {{ appointment.client }}</p>
@@ -21,12 +16,16 @@
 
         <hr style="margin: 24px 0; border: none; border-top: 1px solid #eee;">
 
-        <p>Вы действительно хотите удалить эту запись?</p>
+        <p>Запись не будет удалена из системы. Она перейдёт в статус отменённой и сохранится в истории клиента.</p>
 
         <form method="post">
             {% csrf_token %}
+            <div class="form-row">
+                <label for="id_cancel_reason">Причина отмены</label>
+                <textarea name="cancel_reason" id="id_cancel_reason" rows="4" required></textarea>
+            </div>
             <div class="actions">
-                <button type="submit">Да, удалить запись</button>
+                <button type="submit">Отменить запись</button>
                 <a href="{% url 'core:dashboard_appointments' %}" class="button button-outline">Отмена</a>
             </div>
         </form>

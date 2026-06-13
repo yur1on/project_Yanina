@@ -1,14 +1,13 @@
-{% extends "base.html" %}
+{% extends "dashboard/base.html" %}
 
 {% block title %}Новая запись{% endblock %}
+{% block admin_title %}Новая запись{% endblock %}
+{% block admin_description %}<p>Быстро создайте запись для клиента вручную, если заявка пришла не через сайт.</p>{% endblock %}
+{% block admin_header %}
+    <h2 class="appointment-create-title">Новая запись</h2>
+{% endblock %}
 
-{% block content %}
-    <div class="section-header">
-        <h1>Новая запись</h1>
-        <div class="actions">
-            <a href="{% url 'core:dashboard_appointments' %}" class="button button-light">Назад к записям</a>
-        </div>
-    </div>
+{% block admin_body %}
 
     <div class="content-card">
         <form method="post" id="appointment-form">
@@ -85,6 +84,58 @@
     </div>
 
     <style>
+        .appointment-create-title {
+            margin: 0 0 6px;
+            font-size: clamp(28px, 4vw, 40px);
+            line-height: 1;
+        }
+
+        .admin-dashboard .content-card {
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+
+        .admin-dashboard .admin-page-content {
+            width: min(100%, 992px);
+            max-width: none;
+            margin: 0 auto;
+        }
+
+        .admin-dashboard .content-card form {
+            display: grid;
+            gap: 12px;
+            width: min(100%, 912px);
+            max-width: none;
+            margin: 0 auto;
+        }
+
+        .admin-dashboard .content-card .grid.grid-2 {
+            gap: 12px 14px;
+        }
+
+        .admin-dashboard .content-card .form-row {
+            margin: 0;
+        }
+
+        .admin-dashboard .content-card .form-row label {
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        .admin-dashboard .content-card input,
+        .admin-dashboard .content-card select,
+        .admin-dashboard .content-card textarea {
+            min-height: 40px;
+            padding: 9px 11px;
+            font-size: 14px;
+        }
+
+        .admin-dashboard .content-card textarea {
+            min-height: 92px;
+        }
+
         .client-search-wrap {
             position: relative;
         }
@@ -98,8 +149,10 @@
         }
 
         .button-small {
-            padding: 8px 12px;
-            font-size: 14px;
+            min-height: 32px;
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 10px;
             text-decoration: none;
         }
 
@@ -149,6 +202,26 @@
             background: #eef9ef;
             color: #2f7d32;
             font-weight: 600;
+        }
+
+        .admin-dashboard .content-card .actions {
+            margin-top: 2px;
+        }
+
+        .admin-dashboard .content-card .actions button,
+        .admin-dashboard .content-card .actions .button {
+            min-height: 36px;
+            padding: 7px 12px;
+            font-size: 13px;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 820px) {
+            .admin-dashboard .admin-page-content,
+            .admin-dashboard .content-card form {
+                width: 100%;
+                max-width: none;
+            }
         }
     </style>
 

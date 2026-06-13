@@ -1,111 +1,266 @@
 {% extends "base.html" %}
 
 {% block title %}Мастера{% endblock %}
+{% block body_class %}master-list-page{% endblock %}
 
 {% block content %}
-    <section class="section">
-        <div class="section-header">
-            <h1>Мастера</h1>
-            <a href="{% url 'booking:booking_form' %}" class="button">Записаться онлайн</a>
+<section class="masters-page">
+    <div class="masters-container">
+        <!-- Заголовок -->
+        <div class="masters-header">
+            <h1>Наши мастера</h1>
+            <p>Профессионалы, которым можно доверять</p>
         </div>
 
-        <div class="cards-grid cards-grid-3">
+        <!-- Сетка мастеров -->
+        <div class="masters-grid">
             {% for master in masters %}
-                <article class="public-card">
+                <div class="master-card">
                     <div class="master-photo">
                         {% if master.photo %}
                             <img src="{{ master.photo.url }}" alt="{{ master.display_name }}">
                         {% else %}
-                            <div class="master-photo__placeholder">
-                                {{ master.display_name|first }}
+                            <div class="photo-placeholder">
+                                {{ master.display_name|slice:":1" }}
                             </div>
                         {% endif %}
                     </div>
 
-                    <h3>{{ master.display_name }}</h3>
+                    <div class="master-info">
+                        <h3 class="master-name">{{ master.display_name }}</h3>
 
-                    {% if master.position %}
-                        <p class="muted"><strong>{{ master.position }}</strong></p>
-                    {% endif %}
+                        <div class="master-experience">
+                            {{ master.experience_years }} {% if master.experience_years == 1 %}год{% elif master.experience_years < 5 %}года{% else %}лет{% endif %} опыта
+                        </div>
 
-                    <p class="muted">
-                        {{ master.short_bio|default:"Описание мастера будет добавлено позже." }}
-                    </p>
+                        <p class="master-bio">
+                            {{ master.short_bio|default:"Профессионал своего дела"|truncatewords:12 }}
+                        </p>
 
-                    {% if master.experience_years %}
-                        <p><strong>Опыт:</strong> {{ master.experience_years }} лет</p>
-                    {% endif %}
-
-                    <div class="public-card__actions">
-                        {% if master.slug %}
-                            <a href="{% url 'catalog:master_detail' master.slug %}" class="button">Подробнее</a>
-                        {% endif %}
-                        <a href="{% url 'booking:booking_form' %}?master={{ master.id }}" class="button button-light">Записаться</a>
+                        <div class="master-actions">
+                            <a href="{% url 'catalog:master_detail' master.slug %}" class="btn-link">Подробнее</a>
+                            <a href="{% url 'booking:booking_form' %}?master={{ master.id }}" class="btn-primary">Записаться</a>
+                        </div>
                     </div>
-                </article>
+                </div>
             {% empty %}
-                <div class="content-card">
-                    <p>Мастера пока не добавлены.</p>
+                <div class="empty-state">
+                    <p>Мастера скоро появятся</p>
                 </div>
             {% endfor %}
         </div>
-    </section>
+    </div>
+</section>
+{% endblock %}
 
-    <style>
-        .cards-grid {
-            display: grid;
-            gap: 20px;
-        }
+{% block extra_style %}
+<style>
+body.master-list-page {
+    background:
+        linear-gradient(0deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.72)),
+        url("/media/masters/master-list-silhouette.png"),
+        radial-gradient(circle at top left, rgba(210, 233, 255, 0.55), transparent 28%),
+        radial-gradient(circle at top right, rgba(244, 232, 220, 0.45), transparent 32%),
+        linear-gradient(180deg, rgba(246, 250, 255, 0.96) 0%, rgba(250, 245, 239, 0.94) 100%);
+    background-size: cover, cover, auto, auto, auto;
+    background-position: center center, right center, top left, top right, center center;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+    background-attachment: fixed, fixed, scroll, scroll, scroll;
+}
 
-        .cards-grid-3 {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
+body.master-list-page .page-container {
+    background: transparent;
+}
 
-        .public-card {
-            background: #fff;
-            border-radius: 22px;
-            padding: 22px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-        }
+.masters-page {
+    padding: 40px 20px 60px;
+    min-height: 100vh;
+    background: transparent;
+}
 
-        .master-photo {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            border-radius: 18px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            background: #f8f9fa;
-        }
+.masters-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
 
-        .master-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
+/* Заголовок */
+.masters-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
 
-        .master-photo__placeholder {
-            width: 100%;
-            height: 100%;
-            display: grid;
-            place-items: center;
-            background: #f6edff;
-            color: #7b2cbf;
-            font-size: 42px;
-            font-weight: 700;
-        }
+.masters-header h1 {
+    font-size: 36px;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: #2c3e50;
+}
 
-        .public-card__actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 14px;
-        }
+.masters-header p {
+    font-size: 16px;
+    color: #7f8c8d;
+    margin: 0;
+}
 
-        @media (max-width: 980px) {
-            .cards-grid-3 {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+/* Сетка */
+.masters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+/* Карточка мастера */
+.master-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.master-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Фото */
+.master-photo {
+    height: 260px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #e8d5c4, #d4c0af);
+}
+
+.master-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.master-card:hover .master-photo img {
+    transform: scale(1.05);
+}
+
+.photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #e8d5c4, #d4c0af);
+}
+
+/* Информация */
+.master-info {
+    padding: 20px;
+}
+
+.master-name {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: #2c3e50;
+}
+
+.master-experience {
+    font-size: 13px;
+    color: #e67e22;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.master-bio {
+    font-size: 14px;
+    color: #7f8c8d;
+    line-height: 1.5;
+    margin: 0 0 16px;
+}
+
+/* Кнопки */
+.master-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-link {
+    flex: 1;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #e0e0e0;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c3e50;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.btn-link:hover {
+    border-color: #e67e22;
+    color: #e67e22;
+}
+
+.btn-primary {
+    flex: 1;
+    padding: 8px 16px;
+    background: #e67e22;
+    border: none;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: white;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background: #d35400;
+}
+
+/* Пустое состояние */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px;
+    background: white;
+    border-radius: 20px;
+    color: #7f8c8d;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .masters-page {
+        padding: 20px 16px 40px;
+    }
+
+    .masters-header h1 {
+        font-size: 28px;
+    }
+
+    .masters-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .master-photo {
+        height: 220px;
+    }
+}
+
+@media (max-width: 480px) {
+    .master-actions {
+        flex-direction: column;
+    }
+
+    .btn-link,
+    .btn-primary {
+        width: 100%;
+    }
+}
+</style>
 {% endblock %}

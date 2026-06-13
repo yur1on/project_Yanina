@@ -1,15 +1,10 @@
-{% extends "base.html" %}
+{% extends "dashboard/base.html" %}
 
 {% block title %}Редактировать клиента{% endblock %}
+{% block admin_title %}Редактировать клиента{% endblock %}
+{% block admin_description %}<p>Обновите контакты, источник, теги и служебные заметки по клиенту.</p>{% endblock %}
 
-{% block content %}
-    <div class="section-header">
-        <h1>Редактировать клиента</h1>
-        <div class="actions">
-            <a href="{% url 'core:dashboard_client_detail' client.id %}" class="button button-light">Назад в карточку</a>
-            <a href="{% url 'core:dashboard_appointments' %}" class="button button-outline">Все записи</a>
-        </div>
-    </div>
+{% block admin_body %}
 
     <div class="content-card">
         <form method="post">

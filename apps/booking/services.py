@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db import transaction
 from django.utils import timezone
 
 from apps.booking.models import Appointment, AppointmentStatusHistory
@@ -265,40 +265,48 @@ class BookingService:
         comment: str = "",
         created_by=None,
     ) -> Appointment:
-        availability = BookingService.check_availability(
-            master=master,
-            service=service,
-            start_at=start_at,
-        )
-        if not availability.is_available:
-            raise ValidationError(availability.message)
+        with transaction.atomic():
+            Master.objects.select_for_update().filter(pk=master.pk).exists()
 
-        effective_duration_minutes = BookingService.get_effective_duration_minutes(master, service)
-        effective_price = BookingService.get_effective_price(master, service)
-        end_at = start_at + timedelta(minutes=effective_duration_minutes)
+            availability = BookingService.check_availability(
+                master=master,
+                service=service,
+                start_at=start_at,
+            )
+            if not availability.is_available:
+                raise ValidationError(availability.message)
 
-        appointment = Appointment.objects.create(
-            client=client,
-            master=master,
-            service=service,
-            start_at=start_at,
-            end_at=end_at,
-            status=status,
-            source=source,
-            price=effective_price,
-            comment=comment,
-            created_by=created_by,
-        )
+            effective_duration_minutes = BookingService.get_effective_duration_minutes(master, service)
+            effective_price = BookingService.get_effective_price(master, service)
+            end_at = start_at + timedelta(minutes=effective_duration_minutes)
 
-        AppointmentStatusHistory.objects.create(
-            appointment=appointment,
-            old_status="",
-            new_status=status,
-            changed_by=created_by,
-            comment="Запись создана.",
-        )
+            appointment = Appointment.objects.create(
+                client=client,
+                master=master,
+                service=service,
+                start_at=start_at,
+                end_at=end_at,
+                status=status,
+                source=source,
+                price=effective_price,
+                comment=comment,
+                created_by=created_by,
+            )
 
-        return appointment
+            AppointmentStatusHistory.objects.create(
+                appointment=appointment,
+                old_status="",
+                new_status=status,
+                changed_by=created_by,
+                comment="Запись создана.",
+            )
+
+            if status == Appointment.Status.CONFIRMED:
+                appointment.confirmed_by = created_by
+                appointment.confirmed_at = appointment.created_at
+                appointment.save(update_fields=["confirmed_by", "confirmed_at"])
+
+            return appointment
 
     @staticmethod
     def change_status(
@@ -313,17 +321,41 @@ class BookingService:
         if old_status == new_status:
             return appointment
 
+        allowed_transitions = {
+            Appointment.Status.PENDING: {
+                Appointment.Status.CONFIRMED,
+                Appointment.Status.CANCELLED,
+                Appointment.Status.NO_SHOW,
+            },
+            Appointment.Status.CONFIRMED: {
+                Appointment.Status.COMPLETED,
+                Appointment.Status.CANCELLED,
+                Appointment.Status.NO_SHOW,
+            },
+            Appointment.Status.COMPLETED: set(),
+            Appointment.Status.CANCELLED: set(),
+            Appointment.Status.NO_SHOW: {
+                Appointment.Status.CONFIRMED,
+                Appointment.Status.CANCELLED,
+            },
+        }
+
+        if new_status not in allowed_transitions.get(old_status, set()):
+            raise ValidationError("Такой переход статуса недоступен для текущей записи.")
+
         appointment.status = new_status
 
         if new_status == Appointment.Status.CONFIRMED:
             appointment.confirmed_by = changed_by
             appointment.confirmed_at = timezone.now()
+            appointment.cancelled_by = None
+            appointment.cancelled_at = None
+            appointment.cancel_reason = ""
 
         if new_status == Appointment.Status.CANCELLED:
             appointment.cancelled_by = changed_by
             appointment.cancelled_at = timezone.now()
-            if comment and not appointment.cancel_reason:
-                appointment.cancel_reason = comment
+            appointment.cancel_reason = comment or appointment.cancel_reason or "Отмена без указания причины"
 
         appointment.save()
 

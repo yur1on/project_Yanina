@@ -7,6 +7,7 @@ from django.utils import timezone
 from apps.booking.availability import AvailabilityService
 from apps.catalog.models import Master, Service
 from apps.clients.models import Client
+from apps.clients.utils import normalize_phone
 
 
 class PublicBookingForm(forms.Form):
@@ -16,14 +17,20 @@ class PublicBookingForm(forms.Form):
         empty_label="Выберите услугу",
     )
     master = forms.ModelChoiceField(
-        queryset=Master.objects.none(),
+        queryset=Master.objects.filter(is_active=True).order_by("sort_order", "display_name"),
         label="Мастер",
-        empty_label="Сначала выберите услугу",
+        empty_label="Выберите мастера",
         required=False,
     )
     booking_date = forms.DateField(
         label="Дата",
-        widget=forms.DateInput(attrs={"type": "date"}),
+        widget=forms.DateInput(
+            attrs={
+                "type": "text",
+                "autocomplete": "off",
+                "placeholder": "Выберите дату",
+            }
+        ),
         input_formats=["%Y-%m-%d"],
         required=False,
     )
@@ -34,11 +41,11 @@ class PublicBookingForm(forms.Form):
     )
 
     first_name = forms.CharField(label="Имя", max_length=150)
-    last_name = forms.CharField(label="Фамилия", max_length=150, required=False)
+    last_name = forms.CharField(label="Фамилия (необязательно)", max_length=150, required=False)
     phone = forms.CharField(label="Телефон", max_length=30)
-    email = forms.EmailField(label="Email", required=False)
+    email = forms.EmailField(label="Email (необязательно)", required=False)
     comment = forms.CharField(
-        label="Комментарий",
+        label="Комментарий (необязательно)",
         required=False,
         widget=forms.Textarea(attrs={"rows": 4}),
     )
@@ -47,6 +54,7 @@ class PublicBookingForm(forms.Form):
         initial = kwargs.get("initial", {}) or {}
         super().__init__(*args, **kwargs)
 
+        self.fields["service"].queryset = self._build_service_queryset(initial)
         self.fields["master"].queryset = self._build_master_queryset(initial)
         self.fields["slot"].choices = self._build_slot_choices(initial)
 
@@ -59,21 +67,29 @@ class PublicBookingForm(forms.Form):
         return initial.get(field_name) or self.initial.get(field_name)
 
     def _build_master_queryset(self, initial=None):
-        service_id = self._get_value("service", initial=initial)
         master_id = self._get_value("master", initial=initial)
 
         queryset = Master.objects.filter(is_active=True)
 
-        if service_id:
-            queryset = queryset.filter(
-                master_services__service_id=service_id,
-                master_services__is_active=True,
-            ).distinct()
-
-        if master_id and not service_id:
+        if master_id:
             queryset = queryset.filter(id=master_id)
 
         return queryset.order_by("sort_order", "display_name")
+
+    def _build_service_queryset(self, initial=None):
+        master_id = self._get_value("master", initial=initial)
+        queryset = Service.objects.filter(is_active=True)
+
+        if master_id:
+            queryset = queryset.filter(
+                master_services__master_id=master_id,
+                master_services__is_active=True,
+                master_services__master__is_active=True,
+            ).distinct()
+        else:
+            queryset = queryset.none()
+
+        return queryset.order_by("sort_order", "name")
 
     def _build_slot_choices(self, initial=None):
         service = self._get_value("service", initial=initial)
@@ -170,7 +186,7 @@ class PublicBookingForm(forms.Form):
     def get_or_create_client(self):
         first_name = self.cleaned_data["first_name"]
         last_name = self.cleaned_data.get("last_name", "")
-        phone = self.cleaned_data["phone"]
+        phone = normalize_phone(self.cleaned_data["phone"])
         email = self.cleaned_data.get("email", "")
 
         client, _ = Client.objects.get_or_create(
@@ -201,3 +217,9 @@ class PublicBookingForm(forms.Form):
             client.save()
 
         return client
+
+    def clean_phone(self):
+        phone = normalize_phone(self.cleaned_data["phone"])
+        if not phone or len(phone) < 8:
+            raise ValidationError("Введите корректный номер телефона.")
+        return phone

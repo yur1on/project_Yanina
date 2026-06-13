@@ -1,14 +1,10 @@
-{% extends "base.html" %}
+{% extends "dashboard/base.html" %}
 
 {% block title %}Редактировать запись{% endblock %}
+{% block admin_title %}Редактировать запись{% endblock %}
+{% block admin_description %}<p>Измените мастера, услугу, дату, слот или комментарий по уже созданной записи.</p>{% endblock %}
 
-{% block content %}
-    <div class="section-header">
-        <h1>Редактировать запись</h1>
-        <div class="actions">
-            <a href="{% url 'core:dashboard_appointments' %}" class="button button-light">Назад к записям</a>
-        </div>
-    </div>
+{% block admin_body %}
 
     <div class="content-card">
         <form method="post" id="appointment-form">
@@ -352,25 +348,6 @@
             });
 
             window.addEventListener("load", function () {
-                const initialMaster = "{{ form.master.value|default:''|escapejs }}";
-                const initialService = "{{ form.service.value|default:''|escapejs }}";
-                const initialSlot = "{{ form.slot.value|default:''|escapejs }}";
-
-                if (initialMaster) {
-                    loadServices(initialService);
-                }
-                if (initialService) {
-                    loadMasters(initialMaster);
-                }
-
-                setTimeout(() => {
-                    if (masterField.value && serviceField.value && dateField.value) {
-                        loadSlots(initialSlot);
-                    } else {
-                        resetSlots("Сначала выберите мастера, услугу и дату");
-                    }
-                }, 350);
-
                 updateCreateClientLink();
             });
         })();

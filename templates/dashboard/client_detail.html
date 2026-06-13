@@ -1,16 +1,17 @@
-{% extends "base.html" %}
+{% extends "dashboard/base.html" %}
 
 {% block title %}Карточка клиента{% endblock %}
+{% block admin_title %}Карточка клиента{% endblock %}
+{% block admin_description %}<p>Здесь собрана история клиента, заметки и быстрые действия по повторной записи.</p>{% endblock %}
+{% block admin_head_actions %}
+    <a href="{% url 'core:dashboard_client_edit' client.id %}" class="button button-light">Редактировать клиента</a>
+    <a href="{{ new_appointment_url }}" class="button">Новая запись клиенту</a>
+{% endblock %}
 
-{% block content %}
-    <div class="section-header">
-        <h1>Карточка клиента</h1>
-        <div class="actions">
-            <a href="{% url 'core:dashboard_client_edit' client.id %}" class="button button-light">Редактировать клиента</a>
-            <a href="{{ new_appointment_url }}" class="button">Новая запись клиенту</a>
-            <a href="{{ new_appointment_today_url }}" class="button button-outline">Запись на сегодня</a>
-            <a href="{% url 'core:dashboard_appointments' %}" class="button button-outline">Все записи</a>
-        </div>
+{% block admin_body %}
+
+    <div class="actions" style="margin-bottom: 20px;">
+        <a href="{{ new_appointment_today_url }}" class="button button-outline">Запись на сегодня</a>
     </div>
 
     <div class="grid grid-2">
@@ -168,7 +169,7 @@
 <div class="actions">
     <a href="{% url 'core:dashboard_appointment_edit' appointment.id %}" class="button button-outline">Редактировать</a>
     <a href="{% url 'core:dashboard_appointment_quick_move' appointment.id %}" class="button button-outline">Перенести</a>
-    <a href="{% url 'core:dashboard_appointment_delete' appointment.id %}" class="button button-outline">Удалить</a>
+    <a href="{% url 'core:dashboard_appointment_delete' appointment.id %}" class="button button-outline">Отменить</a>
 </div>
                             </td>
                         </tr>
