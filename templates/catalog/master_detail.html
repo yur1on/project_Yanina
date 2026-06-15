@@ -349,11 +349,21 @@ body.master-detail-page .page-container {
     justify-content: space-between;
     gap: 16px;
     padding: 16px 18px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 249, 245, 0.96));
+    background:
+        linear-gradient(180deg, rgba(255, 252, 249, 0.99), rgba(255, 244, 238, 0.97)),
+        radial-gradient(circle at top right, rgba(244, 224, 213, 0.16), transparent 38%);
     border: 1px solid rgba(76, 56, 42, 0.14);
     border-radius: 18px;
     box-shadow: 0 10px 24px rgba(50, 31, 18, 0.05);
     transition: all 0.2s ease;
+}
+
+.service-category-group {
+    padding: 14px;
+    border-radius: 20px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .service-row:hover {
@@ -382,24 +392,28 @@ body.master-detail-page .page-container {
     display: inline-flex;
     align-items: center;
     min-height: 34px;
-    padding: 6px 12px;
+    padding: 7px 13px;
     border-radius: 999px;
-    background: rgba(226, 235, 244, 0.78);
+    background: linear-gradient(180deg, rgba(233, 240, 247, 0.96), rgba(223, 233, 242, 0.86));
+    border: 1px solid rgba(119, 140, 158, 0.18);
     font-size: 13px;
     font-weight: 600;
-    color: #526172;
+    color: #4d5d6d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .service-price {
     display: inline-flex;
     align-items: center;
     min-height: 34px;
-    padding: 6px 12px;
+    padding: 7px 13px;
     border-radius: 999px;
-    background: rgba(255, 238, 231, 0.92);
+    background: linear-gradient(180deg, rgba(255, 241, 235, 0.98), rgba(255, 232, 223, 0.9));
+    border: 1px solid rgba(191, 111, 79, 0.16);
     font-size: 17px;
     font-weight: 700;
     color: #b95d3d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .service-book {
@@ -519,6 +533,24 @@ body.master-detail-page .page-container {
         padding: 18px;
     }
 
+    .master-services {
+        margin-left: -8px;
+        margin-right: -8px;
+    }
+
+    .services-list {
+        gap: 14px;
+    }
+
+    .service-category-group {
+        padding: 0;
+    }
+
+    .service-category-title {
+        margin-left: 8px;
+        margin-right: 8px;
+    }
+
     .master-intro h1 {
         font-size: 26px;
     }
@@ -528,7 +560,8 @@ body.master-detail-page .page-container {
         align-items: stretch;
         text-align: left;
         gap: 12px;
-        padding: 15px 14px;
+        padding: 15px 16px;
+        border-radius: 16px;
     }
 
     .service-details {
