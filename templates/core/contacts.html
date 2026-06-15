@@ -87,12 +87,12 @@
                 </div>
                 <div class="hours-grid">
                     <div class="hour-item">
-                        <span>Пн-Пт</span>
-                        <strong>10:00 — 21:00</strong>
+                        <span>{{ site_settings.weekday_hours_label|default:"Пн-Пт" }}</span>
+                        <strong>{{ site_settings.weekday_hours|default:"10:00 — 21:00" }}</strong>
                     </div>
                     <div class="hour-item">
-                        <span>Сб-Вс</span>
-                        <strong>11:00 — 19:00</strong>
+                        <span>{{ site_settings.weekend_hours_label|default:"Сб-Вс" }}</span>
+                        <strong>{{ site_settings.weekend_hours|default:"11:00 — 19:00" }}</strong>
                     </div>
                 </div>
             </div>
@@ -700,8 +700,13 @@
         }
 
         @media (max-width: 560px) {
+            body.contacts-page .page-container {
+                padding-left: 0;
+                padding-right: 0;
+            }
+
             .contact-grid {
-                padding-top: 18px;
+                padding: 18px 10px 0;
                 gap: 16px;
             }
 

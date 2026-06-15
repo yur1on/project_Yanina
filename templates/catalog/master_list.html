@@ -235,8 +235,13 @@ body.master-list-page .page-container {
 
 /* Адаптивность */
 @media (max-width: 768px) {
+    body.master-list-page .page-container {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     .masters-page {
-        padding: 20px 16px 40px;
+        padding: 16px 10px 36px;
     }
 
     .masters-header h1 {
@@ -250,6 +255,14 @@ body.master-list-page .page-container {
 
     .master-photo {
         height: 220px;
+    }
+
+    .master-card {
+        border-radius: 18px;
+    }
+
+    .master-info {
+        padding: 18px;
     }
 }
 

@@ -8,6 +8,10 @@ class SiteSettings(models.Model):
     phone = models.CharField("Телефон", max_length=50, blank=True)
     email = models.EmailField("Email", blank=True)
     address = models.CharField("Адрес", max_length=255, blank=True)
+    weekday_hours_label = models.CharField("Подпись будних дней", max_length=50, blank=True, default="Пн-Пт")
+    weekday_hours = models.CharField("Время работы в будни", max_length=50, blank=True, default="10:00 — 21:00")
+    weekend_hours_label = models.CharField("Подпись выходных дней", max_length=50, blank=True, default="Сб-Вс")
+    weekend_hours = models.CharField("Время работы в выходные", max_length=50, blank=True, default="11:00 — 19:00")
 
     instagram = models.URLField("Instagram", blank=True)
     telegram = models.URLField("Telegram", blank=True)

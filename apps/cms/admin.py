@@ -22,6 +22,10 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                     "phone",
                     "email",
                     "address",
+                    "weekday_hours_label",
+                    "weekday_hours",
+                    "weekend_hours_label",
+                    "weekend_hours",
                 )
             },
         ),
