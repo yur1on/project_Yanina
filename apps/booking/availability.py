@@ -21,11 +21,22 @@ class TimeSlot:
 
 class AvailabilityService:
     DEFAULT_SLOT_STEP_MINUTES = 30
+    BOOKING_WINDOW_DAYS = 45
 
     ACTIVE_APPOINTMENT_STATUSES = [
         Appointment.Status.PENDING,
         Appointment.Status.CONFIRMED,
     ]
+
+    @staticmethod
+    def get_latest_booking_date() -> date:
+        return timezone.localdate() + timedelta(days=AvailabilityService.BOOKING_WINDOW_DAYS)
+
+    @staticmethod
+    def is_date_within_booking_window(target_date: date) -> bool:
+        today = timezone.localdate()
+        latest_date = AvailabilityService.get_latest_booking_date()
+        return today <= target_date <= latest_date
 
     @staticmethod
     def get_available_slots(
@@ -40,6 +51,9 @@ class AvailabilityService:
         """
 
         if slot_step_minutes <= 0:
+            return []
+
+        if not AvailabilityService.is_date_within_booking_window(target_date):
             return []
 
         master_service_result = BookingService.check_master_service(master, service)
@@ -122,13 +136,12 @@ class AvailabilityService:
         """
 
         _, days_in_month = calendar.monthrange(year, month)
-        today = timezone.localdate()
         statuses: dict[str, str] = {}
 
         for day in range(1, days_in_month + 1):
             target_date = date(year, month, day)
 
-            if target_date < today:
+            if not AvailabilityService.is_date_within_booking_window(target_date):
                 continue
 
             slots = AvailabilityService.get_available_slots(

@@ -54,6 +54,9 @@ class PublicBookingForm(forms.Form):
         initial = kwargs.get("initial", {}) or {}
         super().__init__(*args, **kwargs)
 
+        latest_booking_date = AvailabilityService.get_latest_booking_date()
+        self.fields["booking_date"].widget.attrs["data-max-date"] = latest_booking_date.isoformat()
+
         self.fields["service"].queryset = self._build_service_queryset(initial)
         self.fields["master"].queryset = self._build_master_queryset(initial)
         self.fields["slot"].choices = self._build_slot_choices(initial)
@@ -125,9 +128,13 @@ class PublicBookingForm(forms.Form):
             return booking_date
 
         today = timezone.localdate()
+        latest_booking_date = AvailabilityService.get_latest_booking_date()
 
         if booking_date < today:
             raise ValidationError("Нельзя выбрать дату в прошлом.")
+
+        if booking_date > latest_booking_date:
+            raise ValidationError("Запись доступна не более чем на 45 дней вперёд.")
 
         return booking_date
 

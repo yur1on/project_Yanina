@@ -7,6 +7,7 @@ from django.test import Client as HttpClient, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.booking.availability import AvailabilityService
 from apps.booking.forms import PublicBookingForm
 from apps.booking.models import Appointment
 from apps.booking.services import BookingService
@@ -179,6 +180,43 @@ class BookingFlowTestCase(TestCase):
         self.assertEqual(client.id, self.client.id)
         self.assertEqual(client.phone, "+375447778899")
         self.assertEqual(Client.objects.count(), 1)
+
+    def test_public_booking_form_rejects_dates_beyond_booking_window(self):
+        booking_date = AvailabilityService.get_latest_booking_date() + timedelta(days=1)
+        start_at = timezone.make_aware(
+            datetime.combine(booking_date, time(10, 0)),
+            timezone.get_current_timezone(),
+        )
+        form = PublicBookingForm(
+            data={
+                "service": self.service.id,
+                "master": self.master.id,
+                "booking_date": booking_date.isoformat(),
+                "slot": start_at.isoformat(),
+                "first_name": "Елена",
+                "last_name": "Иванова",
+                "phone": "+375 (44) 777-88-99",
+                "email": "client@example.com",
+                "comment": "",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("booking_date", form.errors)
+
+    def test_available_slots_api_returns_empty_beyond_booking_window(self):
+        booking_date = AvailabilityService.get_latest_booking_date() + timedelta(days=1)
+        response = self.http_client.get(
+            reverse("booking:available_slots"),
+            {
+                "service": self.service.id,
+                "master": self.master.id,
+                "date": booking_date.isoformat(),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"slots": []})
 
     def test_available_services_api_returns_master_specific_price_and_duration(self):
         response = self.http_client.get(

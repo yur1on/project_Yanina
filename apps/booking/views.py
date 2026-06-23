@@ -264,6 +264,9 @@ class AvailableSlotsView(View):
         except (Service.DoesNotExist, Master.DoesNotExist, ValueError):
             return JsonResponse({"slots": []})
 
+        if not AvailabilityService.is_date_within_booking_window(parsed_date):
+            return JsonResponse({"slots": []})
+
         slots = AvailabilityService.get_available_slots(
             master=master,
             service=service,
@@ -296,6 +299,11 @@ class AvailableCalendarDaysView(View):
             master = Master.objects.get(pk=master_id, is_active=True)
             parsed_month = datetime.strptime(month_value, "%Y-%m")
         except (Service.DoesNotExist, Master.DoesNotExist, ValueError):
+            return JsonResponse({"days": {}})
+
+        latest_booking_date = AvailabilityService.get_latest_booking_date()
+        requested_month_start = parsed_month.date().replace(day=1)
+        if requested_month_start > latest_booking_date.replace(day=1):
             return JsonResponse({"days": {}})
 
         day_statuses = AvailabilityService.get_month_day_statuses(
