@@ -94,13 +94,14 @@ class MasterAdmin(admin.ModelAdmin):
         "id",
         "display_name",
         "user",
+        "telegram_chat_id",
         "experience_years",
         "is_active",
         "sort_order",
     )
     list_filter = ("is_active",)
     list_editable = ("experience_years", "is_active", "sort_order")
-    search_fields = ("display_name", "user__email", "user__first_name", "user__last_name")
+    search_fields = ("display_name", "user__email", "user__first_name", "user__last_name", "telegram_chat_id")
     autocomplete_fields = ("user",)
     prepopulated_fields = {"slug": ("display_name",)}
     inlines = [MasterServiceInline, PortfolioItemInline]

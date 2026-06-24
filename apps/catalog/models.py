@@ -100,6 +100,12 @@ class Master(models.Model):
     photo = models.ImageField("Фото", upload_to="masters/", blank=True, null=True)
     short_bio = models.CharField("Краткое описание", max_length=500, blank=True)
     full_bio = models.TextField("Полное описание", blank=True)
+    telegram_chat_id = models.CharField(
+        "Telegram chat ID",
+        max_length=64,
+        blank=True,
+        help_text="Если указан, мастер будет получать уведомления о своих новых записях.",
+    )
     experience_years = models.PositiveIntegerField(
         "Опыт (лет)",
         default=0,

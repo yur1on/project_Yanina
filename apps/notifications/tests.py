@@ -5,6 +5,7 @@ from django.test import SimpleTestCase, override_settings
 from apps.notifications.services import (
     TelegramNotificationService,
     build_new_appointment_message,
+    notify_new_appointment,
 )
 
 
@@ -30,6 +31,20 @@ class TelegramNotificationServiceTests(SimpleTestCase):
 
         self.assertTrue(TelegramNotificationService.send_message("hello"))
 
+    @override_settings(
+        TELEGRAM_NOTIFICATIONS_ENABLED=True,
+        TELEGRAM_BOT_TOKEN="token",
+        TELEGRAM_CHAT_ID="owner-chat, second-owner",
+    )
+    @patch("apps.notifications.services.request.urlopen")
+    def test_send_message_sends_to_multiple_chat_ids(self, mock_urlopen):
+        response = MagicMock()
+        response.read.return_value = b'{"ok": true}'
+        mock_urlopen.return_value.__enter__.return_value = response
+
+        self.assertTrue(TelegramNotificationService.send_message("hello"))
+        self.assertEqual(mock_urlopen.call_count, 2)
+
     def test_build_new_appointment_message_contains_essential_data(self):
         appointment = MagicMock()
         appointment.client.first_name = "Инна"
@@ -52,3 +67,19 @@ class TelegramNotificationServiceTests(SimpleTestCase):
         self.assertIn("Перманент бровей", message)
         self.assertIn("100.00 BYN", message)
         self.assertIn("Нужна консультация", message)
+
+    @override_settings(
+        TELEGRAM_NOTIFICATIONS_ENABLED=True,
+        TELEGRAM_BOT_TOKEN="token",
+        TELEGRAM_CHAT_ID="owner-chat",
+    )
+    @patch("apps.notifications.services.TelegramNotificationService.send_message")
+    def test_notify_new_appointment_includes_master_chat_id(self, mock_send_message):
+        mock_send_message.return_value = True
+        appointment = MagicMock()
+        appointment.master.telegram_chat_id = "master-chat"
+
+        notify_new_appointment(appointment)
+
+        _, kwargs = mock_send_message.call_args
+        self.assertEqual(kwargs["chat_ids"], ["owner-chat", "master-chat"])

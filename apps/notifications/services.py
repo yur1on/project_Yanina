@@ -24,45 +24,61 @@ class TelegramNotificationService:
         )
 
     @staticmethod
-    def send_message(text):
+    def get_default_chat_ids():
+        raw_value = str(settings.TELEGRAM_CHAT_ID or "")
+        return [item.strip() for item in raw_value.split(",") if item.strip()]
+
+    @staticmethod
+    def send_message(text, chat_ids=None):
         if not TelegramNotificationService.is_configured():
             logger.info("Telegram notifications are not configured.")
             return False
 
+        recipient_chat_ids = list(dict.fromkeys(chat_ids or TelegramNotificationService.get_default_chat_ids()))
+        if not recipient_chat_ids:
+            logger.info("Telegram notifications skipped: no chat ids configured.")
+            return False
+
         api_url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
-        payload = parse.urlencode(
-            {
-                "chat_id": settings.TELEGRAM_CHAT_ID,
-                "text": text,
-                "parse_mode": "HTML",
-                "disable_web_page_preview": "true",
-            }
-        ).encode("utf-8")
+        delivered = False
 
-        for attempt, delay in enumerate(TelegramNotificationService.RETRY_DELAYS, start=1):
-            if delay:
-                sleep(delay)
+        for chat_id in recipient_chat_ids:
+            payload = parse.urlencode(
+                {
+                    "chat_id": chat_id,
+                    "text": text,
+                    "parse_mode": "HTML",
+                    "disable_web_page_preview": "true",
+                }
+            ).encode("utf-8")
 
-            try:
-                with request.urlopen(api_url, data=payload, timeout=10) as response:
-                    response_payload = json.loads(response.read().decode("utf-8"))
-            except (error.URLError, TimeoutError, ConnectionResetError, json.JSONDecodeError) as exc:
-                logger.warning(
-                    "Telegram notification attempt %s failed: %s",
-                    attempt,
-                    exc,
-                    exc_info=True,
-                )
-                continue
+            for attempt, delay in enumerate(TelegramNotificationService.RETRY_DELAYS, start=1):
+                if delay:
+                    sleep(delay)
 
-            if not response_payload.get("ok"):
-                logger.error("Telegram API returned error: %s", response_payload)
-                return False
+                try:
+                    with request.urlopen(api_url, data=payload, timeout=10) as response:
+                        response_payload = json.loads(response.read().decode("utf-8"))
+                except (error.URLError, TimeoutError, ConnectionResetError, json.JSONDecodeError) as exc:
+                    logger.warning(
+                        "Telegram notification attempt %s failed for chat %s: %s",
+                        attempt,
+                        chat_id,
+                        exc,
+                        exc_info=True,
+                    )
+                    continue
 
-            return True
+                if not response_payload.get("ok"):
+                    logger.error("Telegram API returned error for chat %s: %s", chat_id, response_payload)
+                    break
 
-        logger.error("Failed to send Telegram notification after retries.")
-        return False
+                delivered = True
+                break
+            else:
+                logger.error("Failed to send Telegram notification to chat %s after retries.", chat_id)
+
+        return delivered
 
 
 def _clean_text(value):
@@ -124,4 +140,9 @@ def build_new_appointment_message(appointment):
 
 def notify_new_appointment(appointment):
     message = build_new_appointment_message(appointment)
-    return TelegramNotificationService.send_message(message)
+    recipient_chat_ids = TelegramNotificationService.get_default_chat_ids()
+    master_chat_id = _clean_text(getattr(appointment.master, "telegram_chat_id", ""))
+    if master_chat_id:
+        recipient_chat_ids.append(master_chat_id)
+
+    return TelegramNotificationService.send_message(message, chat_ids=recipient_chat_ids)
