@@ -165,21 +165,51 @@ class PublicBookingView(View):
             "prepayment_required": service.prepayment_required,
             "phone": client.phone,
         }
+        request.session["last_booking_id"] = appointment.id
 
         notify_new_appointment(appointment)
 
-        messages.success(request, "Ваша заявка на запись успешно отправлена.")
+        messages.success(request, "Ваша запись успешно оформлена.")
         return redirect("booking:booking_success")
 
 
 class BookingSuccessView(View):
     template_name = "booking/booking_success.html"
 
+    @staticmethod
+    def _build_booking_summary(appointment):
+        local_start = timezone.localtime(appointment.start_at)
+        return {
+            "service_name": appointment.service.name,
+            "master_name": appointment.master.display_name,
+            "date": local_start.strftime("%d.%m.%Y"),
+            "time": local_start.strftime("%H:%M"),
+            "price": str(appointment.price) if appointment.price is not None else "",
+            "duration_minutes": appointment.duration_minutes,
+            "prepayment_required": appointment.service.prepayment_required,
+            "phone": appointment.client.phone,
+        }
+
     def get(self, request):
+        booking_summary = request.session.get("last_booking_summary")
+
+        if booking_summary is None:
+            appointment_id = request.session.get("last_booking_id")
+            appointment = (
+                Appointment.objects.filter(pk=appointment_id)
+                .select_related("client", "master", "service")
+                .first()
+                if appointment_id
+                else None
+            )
+            if appointment:
+                booking_summary = self._build_booking_summary(appointment)
+                request.session["last_booking_summary"] = booking_summary
+
         return render(
             request,
             self.template_name,
-            {"booking_summary": request.session.pop("last_booking_summary", None)},
+            {"booking_summary": booking_summary},
         )
 
 

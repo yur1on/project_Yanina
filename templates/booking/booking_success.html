@@ -1,34 +1,40 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Заявка отправлена{% endblock %}
+{% block title %}Запись оформлена{% endblock %}
 {% block body_class %}booking-success-page{% endblock %}
 
 {% block content %}
     <section class="section">
         <div class="content-card success-card">
             <div class="success-icon">✓</div>
-            <h1>Заявка успешно отправлена</h1>
+            <h1>Запись успешно оформлена</h1>
             <p>
-                Спасибо! Мы получили вашу заявку.
-                При необходимости с вами свяжутся для уточнения деталей.
+                Спасибо! Ваша запись оформлена.
+                Мы вас ждем в выбранные дату и время.
             </p>
 
             {% if booking_summary %}
                 <div class="success-summary">
                     <h2>Детали вашей записи</h2>
+                    <div class="success-summary__highlight">
+                        <div>
+                            <span>Дата</span>
+                            <strong>{{ booking_summary.date }}</strong>
+                        </div>
+                        <div>
+                            <span>Время</span>
+                            <strong>{{ booking_summary.time }}</strong>
+                        </div>
+                    </div>
                     <div class="success-summary__grid">
                         <div><strong>Услуга:</strong> {{ booking_summary.service_name }}</div>
                         <div><strong>Мастер:</strong> {{ booking_summary.master_name }}</div>
-                        <div><strong>Дата:</strong> {{ booking_summary.date }}</div>
-                        <div><strong>Время:</strong> {{ booking_summary.time }}</div>
                         <div><strong>Длительность:</strong> {{ booking_summary.duration_minutes }} мин</div>
-                        <div><strong>Цена:</strong> {{ booking_summary.price }} BYN</div>
+                        {% if booking_summary.price %}
+                            <div><strong>Цена:</strong> {{ booking_summary.price }} BYN</div>
+                        {% endif %}
                         <div><strong>Телефон:</strong> {{ booking_summary.phone }}</div>
-                        <div>
-                            <strong>Предоплата:</strong>
-                            {% if booking_summary.prepayment_required %}требуется{% else %}не требуется{% endif %}
-                        </div>
                     </div>
                 </div>
             {% endif %}
@@ -103,9 +109,42 @@
             text-align: center;
         }
 
+        .success-summary__highlight {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .success-summary__highlight div {
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(31, 26, 23, 0.06);
+            text-align: center;
+        }
+
+        .success-summary__highlight span {
+            display: block;
+            margin-bottom: 4px;
+            color: #777;
+            font-size: 13px;
+        }
+
+        .success-summary__highlight strong {
+            display: block;
+            color: #1f1a17;
+            font-size: 22px;
+        }
+
         .success-summary__grid {
             display: grid;
             gap: 10px;
+        }
+
+        @media (max-width: 560px) {
+            .success-summary__highlight {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 {% endblock %}
